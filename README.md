@@ -9,13 +9,13 @@ Installing
 Using go get
 
 ```
-$ go get github.com/motain/gozure/notihub
+$ go get github.com/onefootball/gozure/notihub
 ```
 
 The package will be available under the following path:
 
 ```
-$GOPATH/src/github.com/motain/gozure/notihub
+$GOPATH/src/github.com/onefootball/gozure/notihub
 ```
 
 Usage
@@ -26,7 +26,7 @@ package main
 
 import (
     "fmt"
-    "github.com/motain/gozure/notihub"
+    "github.com/onefootball/gozure/notihub"
 )
 
 func main() {
