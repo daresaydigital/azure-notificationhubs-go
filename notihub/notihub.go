@@ -17,7 +17,10 @@ import (
 	"time"
 )
 
-const apiVersion = "?api-version=2013-10"
+const (
+	apiVersion = "?api-version=2013-10"
+	scheme     = "https"
+)
 
 const (
 	Template           NotificationFormat = "template"
@@ -40,7 +43,9 @@ type (
 	NotificationHub struct {
 		sasKeyValue             string
 		sasKeyName              string
-		url                     *url.URL
+		host                    string
+		stdURL                  *url.URL
+		scheduleURL             *url.URL
 		client                  HubClient
 		expirationTimeGenerator expirationTimeGenerator
 	}
@@ -134,27 +139,43 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 		}
 	}
 
-	urlPath := fmt.Sprintf("%s/messages%s", hubPath, apiVersion)
-	aURL := &url.URL{Host: endpoint, Scheme: "https", Path: urlPath}
+	stdPath := fmt.Sprintf("%s/messages%s", hubPath, apiVersion)
+	scheduledPath := fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)
 
-	hub.url = aURL
+	hub.host = endpoint
+	hub.stdURL = &url.URL{Host: endpoint, Scheme: scheme, Path: stdPath}
+	hub.scheduleURL = &url.URL{Host: endpoint, Scheme: scheme, Path: scheduledPath}
+
 	hub.client = &hubHttpClient{&http.Client{}}
 	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
 
 	return hub
 }
 
-// Send sends notification to the azure hub
+// Send publishes notification to the azure hub
 func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error) {
-	errfmt := "NotificationHub.Send error: %s"
-	token := h.generateSasToken()
-
-	buf := bytes.NewBuffer(n.Payload)
-
-	req, err := http.NewRequest("POST", h.url.String(), buf)
+	b, err := h.send(n, orTags, nil)
 	if err != nil {
-		return nil, fmt.Errorf(errfmt, err)
+		return nil, fmt.Errorf("NotificationHub.Send: %s", err)
 	}
+
+	return b, nil
+}
+
+// Schedule pusblishes a scheduled notification to azure notification hub
+func (h *NotificationHub) Schedule(n *Notification, orTags []string, deliverTime time.Time) ([]byte, error) {
+	b, err := h.send(n, orTags, &deliverTime)
+	if err != nil {
+		return nil, fmt.Errorf("NotificationHub.Schedule: %s", err)
+	}
+
+	return b, nil
+}
+
+// send sends notification to the azure hub
+func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *time.Time) ([]byte, error) {
+	token := h.generateSasToken()
+	buf := bytes.NewBuffer(n.Payload)
 
 	headers := map[string]string{
 		"Authorization":                 token,
@@ -164,6 +185,17 @@ func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error)
 
 	if len(orTags) > 0 {
 		headers["ServiceBusNotification-Tags"] = strings.Join(orTags, " || ")
+	}
+
+	urlStr := h.stdURL.String()
+	if deliverTime != nil && deliverTime.Unix() > time.Now().Unix() {
+		urlStr = h.scheduleURL.String()
+		headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
+	}
+
+	req, err := http.NewRequest("POST", urlStr, buf)
+	if err != nil {
+		return nil, err
 	}
 
 	for header, val := range headers {
@@ -176,7 +208,7 @@ func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error)
 // generateSasToken generates and returns
 // azure notification hub shared access signatue token
 func (h *NotificationHub) generateSasToken() string {
-	targetUri := strings.ToLower(url.QueryEscape(fmt.Sprintf("%s://%s", h.url.Scheme, h.url.Host)))
+	targetUri := strings.ToLower(url.QueryEscape(fmt.Sprintf("%s://%s", scheme, h.host)))
 
 	expires := h.expirationTimeGenerator.GenerateTimestamp()
 	toSign := fmt.Sprintf("%s\n%d", targetUri, expires)

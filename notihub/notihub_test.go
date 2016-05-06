@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestNotificationFormatIsValid(t *testing.T) {
@@ -198,7 +199,9 @@ func TestNewNotificationHub(t *testing.T) {
 			expectedHub: &NotificationHub{
 				sasKeyValue:             "testAccessKey",
 				sasKeyName:              "testAccessKeyName",
-				url:                     &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: "https", Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
+				host:                    "testhub-ns.servicebus.windows.net",
+				stdURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
+				scheduleURL:             &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
@@ -208,7 +211,9 @@ func TestNewNotificationHub(t *testing.T) {
 			expectedHub: &NotificationHub{
 				sasKeyValue:             "",
 				sasKeyName:              "",
-				url:                     &url.URL{Host: "", Scheme: "https", Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
+				host:                    "",
+				stdURL:                  &url.URL{Host: "", Scheme: scheme, Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
+				scheduleURL:             &url.URL{Host: "", Scheme: scheme, Path: fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
@@ -226,8 +231,12 @@ func TestNewNotificationHub(t *testing.T) {
 			t.Errorf(errfmt, i, "NotificationHub.sasKeyName", testCase.expectedHub.sasKeyName, obtainedNotificationHub.sasKeyName)
 		}
 
-		if !reflect.DeepEqual(obtainedNotificationHub.url, testCase.expectedHub.url) {
-			t.Errorf(errfmt, i, "NotificationHub.url", testCase.expectedHub.url, testCase.expectedHub.url)
+		if !reflect.DeepEqual(obtainedNotificationHub.stdURL, testCase.expectedHub.stdURL) {
+			t.Errorf(errfmt, i, "NotificationHub.stdURL", testCase.expectedHub.stdURL, testCase.expectedHub.stdURL)
+		}
+
+		if !reflect.DeepEqual(obtainedNotificationHub.scheduleURL, testCase.expectedHub.scheduleURL) {
+			t.Errorf(errfmt, i, "NotificationHub.scheduleURL", testCase.expectedHub.scheduleURL, testCase.expectedHub.scheduleURL)
 		}
 
 		if !reflect.DeepEqual(obtainedNotificationHub.client, testCase.expectedHub.client) {
@@ -251,28 +260,32 @@ func (mc *mockHubHttpClient) Exec(req *http.Request) ([]byte, error) {
 }
 
 func TestNotificationHubSendFanout(t *testing.T) {
-	errfmt := "Expected %s: %v, got: %v"
+	var (
+		errfmt       = "Expected %s: %v, got: %v"
+		notification = &Notification{Template, []byte("test_payload")}
 
-	notification := &Notification{Template, []byte("test_payload")}
+		sasKeyName = "testKeyName"
+		host       = "testhost"
 
-	hubpath := "testhub"
-	sasKeyName := "testKeyName"
-
-	hubUrl := &url.URL{Host: "testhost", Scheme: "https", Path: fmt.Sprintf("%s/messages%s", hubpath, apiVersion)}
+		stdURL      = &url.URL{Host: host, Scheme: "https", Path: "std_url"}
+		scheduleURL = &url.URL{Host: host, Scheme: "https", Path: "schedule_url"}
+	)
 
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              sasKeyName,
-		url:                     hubUrl,
+		host:                    host,
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		if obtainedReq.URL.String() != hubUrl.String() {
-			t.Errorf(errfmt, "request URL", hubUrl, obtainedReq.URL)
+		if obtainedReq.URL.String() != stdURL.String() {
+			t.Errorf(errfmt, "request URL", stdURL, obtainedReq.URL)
 		}
 
 		if obtainedReq.Method != "POST" {
@@ -299,7 +312,7 @@ func TestNotificationHubSendFanout(t *testing.T) {
 		obtainedAuthToken := obtainedReq.Header.Get("Authorization")
 		queryMap, _ := url.ParseQuery(obtainedAuthToken)
 
-		expectedURI := fmt.Sprintf("%s://%s", hubUrl.Scheme, hubUrl.Host)
+		expectedURI := fmt.Sprintf("%s://%s", stdURL.Scheme, scheduleURL.Host)
 		if len(queryMap["SharedAccessSignature sr"]) == 0 || queryMap["SharedAccessSignature sr"][0] != expectedURI {
 			t.Errorf(errfmt, "token target uri", expectedURI, queryMap["SharedAccessSignature sr"])
 		}
@@ -338,21 +351,25 @@ func TestNotificationHubSendFanout(t *testing.T) {
 }
 
 func TestNotificationHubSendCategories(t *testing.T) {
-	errfmt := "Expected %s: %v, got: %v"
+	var (
+		errfmt = "Expected %s: %v, got: %v"
 
-	orTags := []string{"tag1", "tag2"}
-	notification := &Notification{Template, []byte("test_payload")}
+		orTags       = []string{"tag1", "tag2"}
+		notification = &Notification{Template, []byte("test_payload")}
 
-	hubpath := "testhub"
-	sasKeyName := "testKeyName"
+		sasKeyName = "testKeyName"
 
-	hubUrl := &url.URL{Host: "testhost", Scheme: "https", Path: fmt.Sprintf("%s/messages%s", hubpath, apiVersion)}
+		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+	)
+
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              sasKeyName,
-		url:                     hubUrl,
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
@@ -361,6 +378,10 @@ func TestNotificationHubSendCategories(t *testing.T) {
 		expectedTags := strings.Join(orTags, " || ")
 		if obtainedReq.Header.Get("ServiceBusNotification-Tags") != expectedTags {
 			t.Errorf(errfmt, "ServiceBusNotification-Tags", expectedTags, obtainedReq.Header.Get("ServiceBusNotification-Tags"))
+		}
+
+		if obtainedReq.URL.String() != stdURL.String() {
+			t.Errorf(errfmt, "URL", stdURL, obtainedReq)
 		}
 
 		return nil, nil
@@ -377,30 +398,155 @@ func TestNotificationHubSendCategories(t *testing.T) {
 }
 
 func TestNotificationSendError(t *testing.T) {
-	expectedError := errors.New("test error")
+	var (
+		errfmt        = "Expected %s: %v, got: %v"
+		expectedError = errors.New("test error")
+
+		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+	)
 
 	mockClient := &mockHubHttpClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+		if req.URL.String() != stdURL.String() {
+			t.Errorf(errfmt, "URL", stdURL, scheduleURL)
+		}
+
 		return nil, expectedError
 	}
-
-	hubUrl := &url.URL{Host: "testhost", Scheme: "https", Path: fmt.Sprintf("%s/messages%s", "testhub", apiVersion)}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              "testKeyName",
-		url:                     hubUrl,
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
-	errfmt := "Expected %s: %v, got: %v"
 	b, obtainedErr := nhub.Send(&Notification{AndroidFormat, []byte("test payload")}, nil)
 	if b != nil {
 		t.Errorf(errfmt, "Send []byte", nil, b)
 	}
 
-	if !reflect.DeepEqual(obtainedErr, expectedError) {
+	if !strings.Contains(obtainedErr.Error(), expectedError.Error()) {
+		t.Errorf(errfmt, "Send error", expectedError, obtainedErr)
+	}
+}
+
+func TestNotificationScheduleSuccess(t *testing.T) {
+	var (
+		errfmt       = "Expected %s: %v, got: %v"
+		notification = &Notification{Template, []byte("test_payload")}
+
+		sasKeyName = "testKeyName"
+
+		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+	)
+
+	mockClient := &mockHubHttpClient{}
+
+	nhub := &NotificationHub{
+		sasKeyValue:             "testKeyValue",
+		sasKeyName:              sasKeyName,
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
+		client:                  mockClient,
+		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
+	}
+
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
+		if obtainedReq.URL.String() != scheduleURL.String() {
+			t.Errorf(errfmt, "URL", scheduleURL, obtainedReq)
+		}
+
+		return nil, nil
+	}
+
+	b, err := nhub.Schedule(notification, nil, time.Now().Add(time.Minute))
+	if b != nil {
+		t.Errorf(errfmt, "byte", nil, b)
+	}
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+}
+
+func TestNotificationScheduleOutdated(t *testing.T) {
+	var (
+		errfmt       = "Expected %s: %v, got: %v"
+		notification = &Notification{Template, []byte("test_payload")}
+
+		sasKeyName = "testKeyName"
+
+		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+	)
+
+	mockClient := &mockHubHttpClient{}
+
+	nhub := &NotificationHub{
+		sasKeyValue:             "testKeyValue",
+		sasKeyName:              sasKeyName,
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
+		client:                  mockClient,
+		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
+	}
+
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
+		if obtainedReq.URL.String() != stdURL.String() {
+			t.Errorf(errfmt, "URL", scheduleURL, obtainedReq)
+		}
+
+		return nil, nil
+	}
+
+	b, err := nhub.Schedule(notification, nil, time.Now().Add(-time.Minute))
+	if b != nil {
+		t.Errorf(errfmt, "byte", nil, b)
+	}
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+}
+
+func TestNotificationScheduleError(t *testing.T) {
+	var (
+		errfmt        = "Expected %s: %v, got: %v"
+		expectedError = errors.New("test schedule error")
+
+		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+	)
+
+	mockClient := &mockHubHttpClient{}
+	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+		if req.URL.String() != scheduleURL.String() {
+			t.Errorf(errfmt, "URL", scheduleURL, scheduleURL)
+		}
+
+		return nil, expectedError
+	}
+
+	nhub := &NotificationHub{
+		sasKeyValue:             "testKeyValue",
+		sasKeyName:              "testKeyName",
+		stdURL:                  stdURL,
+		scheduleURL:             scheduleURL,
+		client:                  mockClient,
+		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
+	}
+
+	b, obtainedErr := nhub.Schedule(&Notification{AndroidFormat, []byte("test payload")}, nil, time.Now().Add(time.Minute))
+	if b != nil {
+		t.Errorf(errfmt, "Send []byte", nil, b)
+	}
+
+	if !strings.Contains(obtainedErr.Error(), expectedError.Error()) {
 		t.Errorf(errfmt, "Send error", expectedError, obtainedErr)
 	}
 }
