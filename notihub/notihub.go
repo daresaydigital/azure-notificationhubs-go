@@ -9,16 +9,20 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"gopkg.in/xmlpath.v2"
 )
 
 const (
-	apiVersion = "?api-version=2013-10"
+	apiVersion = "?api-version=2015-01"
 	scheme     = "https"
 )
 
@@ -30,6 +34,16 @@ const (
 	KindleFormat       NotificationFormat = "adm"
 	WindowsFormat      NotificationFormat = "windows"
 	WindowsPhoneFormat NotificationFormat = "windowsphone"
+
+	AppleRegTemplate string = `<?xml version="1.0" encoding="utf-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom">
+    <content type="application/xml">
+        <AppleRegistrationDescription xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect">
+            <Tags>{{Tags}}</Tags>
+            <DeviceToken>{{DeviceId}}</DeviceToken> 
+        </AppleRegistrationDescription>
+    </content>
+</entry>`
 )
 
 type (
@@ -40,14 +54,36 @@ type (
 
 	NotificationFormat string
 
+	Registration struct {
+		RegistrationId string             `json:"registrationId"`
+		DeviceId       string             `json:"deviceId"`
+		Service        NotificationFormat `json:"service"`
+		Tags           string             `json:"tags"`
+		ExpirationTime *time.Time         `json:"expirationTime,omitmepty"`
+	}
+
+	RegistrationRes struct {
+		Id             string    `xml:"id"`
+		Title          string    `xml:"title"`
+		Updated        time.Time `xml:"updated"`
+		RegistrationId string
+		ETag           string
+		ExpirationTime time.Time
+	}
+
 	NotificationHub struct {
 		sasKeyValue             string
 		sasKeyName              string
 		host                    string
+		regPath                 string
 		stdURL                  *url.URL
 		scheduleURL             *url.URL
 		client                  HubClient
 		expirationTimeGenerator expirationTimeGenerator
+
+		regIdPath *xmlpath.Path
+		eTagPath  *xmlpath.Path
+		expTmPath *xmlpath.Path
 	}
 
 	HubClient interface {
@@ -145,9 +181,14 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 	hub.host = endpoint
 	hub.stdURL = &url.URL{Host: endpoint, Scheme: scheme, Path: stdPath}
 	hub.scheduleURL = &url.URL{Host: endpoint, Scheme: scheme, Path: scheduledPath}
+	hub.regPath = fmt.Sprintf("%s/registrations", hubPath)
 
 	hub.client = &hubHttpClient{&http.Client{}}
 	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
+
+	hub.regIdPath = xmlpath.MustCompile("/entry/content/*/RegistrationId")
+	hub.eTagPath = xmlpath.MustCompile("/entry/content/*/ETag")
+	hub.expTmPath = xmlpath.MustCompile("/entry/content/*/ExpirationTime")
 
 	return hub
 }
@@ -262,5 +303,76 @@ func handleResponse(resp *http.Response, inErr error) (b []byte, err error) {
 // isOKResponseCode identifies whether provided
 // response code matches the expected OK code
 func isOKResponseCode(code int) bool {
-	return code == http.StatusCreated
+	return code == http.StatusCreated || code == http.StatusOK
+}
+
+// Register sends registration to the azure hub
+func (h *NotificationHub) Register(r Registration) (RegistrationRes, []byte, error) {
+	regRes := RegistrationRes{}
+	token := h.generateSasToken()
+
+	headers := map[string]string{
+		"Authorization": token,
+		"Content-Type":  "application/atom+xml;type=entry;charset=utf-8",
+	}
+
+	regPath := h.regPath
+	method := "POST"
+	payload := ""
+
+	switch r.Service {
+	case AppleFormat:
+		payload = strings.Replace(AppleRegTemplate, "{{DeviceId}}", r.DeviceId, 1)
+		payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
+	default:
+		return regRes, nil, errors.New("not implemented.")
+	}
+
+	if r.RegistrationId != "" {
+		regPath += "/" + r.RegistrationId
+		method = "PUT"
+	}
+	regPath += apiVersion
+
+	regURL := url.URL{Host: h.host, Scheme: scheme, Path: regPath}
+	urlStr := regURL.String()
+	buf := bytes.NewBufferString(payload)
+	req, err := http.NewRequest(method, urlStr, buf)
+	if err != nil {
+		return regRes, nil, err
+	}
+
+	for header, val := range headers {
+		req.Header.Set(header, val)
+	}
+
+	res, err := h.client.Exec(req)
+	if err == nil {
+		if err = xml.Unmarshal(res, &regRes); err != nil {
+			return regRes, res, err
+		}
+		rb := bytes.NewReader(res)
+		if root, err := xmlpath.Parse(rb); err == nil {
+			if regId, ok := h.regIdPath.String(root); ok {
+				regRes.RegistrationId = regId
+			} else {
+				return regRes, res, errors.New("RegistrationId not fount")
+			}
+			if etag, ok := h.eTagPath.String(root); ok {
+				regRes.ETag = etag
+			} else {
+				return regRes, res, errors.New("ETag not fount")
+			}
+			if expTm, ok := h.expTmPath.String(root); ok {
+				if regRes.ExpirationTime, err = time.Parse("2006-01-02T15:04:05.999", expTm); err != nil {
+					return regRes, res, err
+				}
+			} else {
+				return regRes, res, err
+			}
+		} else {
+			return regRes, res, errors.New("ExpirationTime not fount")
+		}
+	}
+	return regRes, res, err
 }
