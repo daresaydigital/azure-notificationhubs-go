@@ -231,6 +231,7 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 		"Authorization":                 token,
 		"Content-Type":                  n.Format.GetContentType(),
 		"ServiceBusNotification-Format": string(n.Format),
+		"X-Apns-Expiration":             string(generateExpirationTimestamp()), //apns-expiration
 	}
 
 	if len(orTags) > 0 {
