@@ -268,10 +268,12 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 		headers["ServiceBusNotification-Tags"] = strings.Join(orTags, " || ")
 	}
 
-	urlStr := h.stdURL.String()
+	var urlStr string
 	if deliverTime != nil && deliverTime.Unix() > time.Now().Unix() {
 		urlStr = h.scheduleURL.String()
 		headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
+	} else {
+		urlStr = h.stdURL.String()
 	}
 
 	req, err := http.NewRequest("POST", urlStr, buf)

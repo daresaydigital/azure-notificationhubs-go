@@ -413,13 +413,12 @@ func TestNotificationSendError(t *testing.T) {
 		expectedError = errors.New("test error")
 
 		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
-		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
 	)
 
 	mockClient := &mockHubHttpClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
-		if req.URL.String() != stdURL.String() {
-			t.Errorf(errfmt, "URL", stdURL, scheduleURL)
+		if reqURL := req.URL.String(); reqURL != stdURL.String() {
+			t.Errorf(errfmt, "URL", stdURL, reqURL)
 		}
 
 		return nil, expectedError
@@ -429,7 +428,6 @@ func TestNotificationSendError(t *testing.T) {
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              "testKeyName",
 		stdURL:                  stdURL,
-		scheduleURL:             scheduleURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
@@ -451,7 +449,6 @@ func TestNotificationScheduleSuccess(t *testing.T) {
 
 		sasKeyName = "testKeyName"
 
-		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
 		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
 	)
 
@@ -460,7 +457,6 @@ func TestNotificationScheduleSuccess(t *testing.T) {
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              sasKeyName,
-		stdURL:                  stdURL,
 		scheduleURL:             scheduleURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
