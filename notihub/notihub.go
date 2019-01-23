@@ -12,13 +12,12 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"gopkg.in/xmlpath.v2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"gopkg.in/xmlpath.v2"
 )
 
 const (
