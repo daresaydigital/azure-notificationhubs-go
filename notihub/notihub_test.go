@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -189,6 +190,7 @@ func TestNotificationString(t *testing.T) {
 func TestNewNotificationHub(t *testing.T) {
 	errfmt := "NewNotificationHub test case %d error. Expected %s: %v, got: %v"
 
+	queryString := url.Values{apiVersionParam: {apiVersionValue}}.Encode()
 	hubPath := "testhub"
 	testCases := []struct {
 		connectionString string
@@ -200,8 +202,8 @@ func TestNewNotificationHub(t *testing.T) {
 				sasKeyValue:             "testAccessKey",
 				sasKeyName:              "testAccessKeyName",
 				host:                    "testhub-ns.servicebus.windows.net",
-				stdURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
-				scheduleURL:             &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)},
+				stdURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
+				scheduleURL:             &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
@@ -212,8 +214,8 @@ func TestNewNotificationHub(t *testing.T) {
 				sasKeyValue:             "",
 				sasKeyName:              "",
 				host:                    "",
-				stdURL:                  &url.URL{Host: "", Scheme: scheme, Path: fmt.Sprintf("%s/messages%s", hubPath, apiVersion)},
-				scheduleURL:             &url.URL{Host: "", Scheme: scheme, Path: fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)},
+				stdURL:                  &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
+				scheduleURL:             &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},

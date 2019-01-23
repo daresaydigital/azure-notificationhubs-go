@@ -16,13 +16,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
 
 const (
-	apiVersion = "?api-version=2015-01"
-	scheme     = "https"
+	apiVersionParam = "api-version"
+	apiVersionValue = "2015-01"
+	scheme          = "https"
 )
 
 const (
@@ -183,13 +185,23 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 		}
 	}
 
-	stdPath := fmt.Sprintf("%s/messages%s", hubPath, apiVersion)
-	scheduledPath := fmt.Sprintf("%s/schedulednotifications%s", hubPath, apiVersion)
+	query := url.Values{apiVersionParam: {apiVersionValue}}
 
 	hub.host = endpoint
-	hub.stdURL = &url.URL{Host: endpoint, Scheme: scheme, Path: stdPath}
-	hub.scheduleURL = &url.URL{Host: endpoint, Scheme: scheme, Path: scheduledPath}
-	hub.regPath = fmt.Sprintf("%s/registrations", hubPath)
+	hub.stdURL = &url.URL{
+		Host:     endpoint,
+		Scheme:   scheme,
+		Path:     path.Join(hubPath, "messages"),
+		RawQuery: query.Encode(),
+	}
+	hub.scheduleURL = &url.URL{
+		Host:     endpoint,
+		Scheme:   scheme,
+		Path:     path.Join(hubPath, "schedulednotifications"),
+		RawQuery: query.Encode(),
+	}
+
+	hub.regPath = path.Join(hubPath, "registrations")
 
 	hub.client = &hubHttpClient{&http.Client{}}
 	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
@@ -340,12 +352,12 @@ func (h *NotificationHub) Register(r Registration) (RegistrationRes, []byte, err
 	payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
 
 	if r.RegistrationId != "" {
-		regPath += "/" + r.RegistrationId
+		regPath = path.Join(regPath, r.RegistrationId)
 		method = "PUT"
 	}
-	regPath += apiVersion
+	query := url.Values{apiVersionParam: {apiVersionValue}}
 
-	regURL := url.URL{Host: h.host, Scheme: scheme, Path: regPath}
+	regURL := url.URL{Host: h.host, Scheme: scheme, Path: regPath, RawQuery: query.Encode()}
 	urlStr := regURL.String()
 	buf := bytes.NewBufferString(payload)
 	req, err := http.NewRequest(method, urlStr, buf)
