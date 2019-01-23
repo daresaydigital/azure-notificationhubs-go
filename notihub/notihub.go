@@ -270,21 +270,26 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 // generateSasToken generates and returns
 // azure notification hub shared access signatue token
 func (h *NotificationHub) generateSasToken() string {
-	targetUri := strings.ToLower(url.QueryEscape(fmt.Sprintf("%s://%s", scheme, h.host)))
+	uri := &url.URL{Scheme: scheme, Host: h.host}
+	targetUri := strings.ToLower(uri.String())
 
 	expires := h.expirationTimeGenerator.GenerateTimestamp()
-	toSign := fmt.Sprintf("%s\n%d", targetUri, expires)
+	toSign := fmt.Sprintf("%s\n%d", url.QueryEscape(targetUri), expires)
 
 	mac := hmac.New(sha256.New, []byte(h.sasKeyValue))
 	mac.Write([]byte(toSign))
 	macb := mac.Sum(nil)
 
-	b64 := base64.StdEncoding.EncodeToString(macb)
-	signature := url.QueryEscape(b64)
+	signature := base64.StdEncoding.EncodeToString(macb)
 
-	token := "SharedAccessSignature sr=" + targetUri + "&sig=" + signature + "&se=" + fmt.Sprintf("%d", expires) + "&skn=" + h.sasKeyName
+	tokenParams := url.Values{
+		"sr":  {targetUri},
+		"sig": {signature},
+		"se":  {fmt.Sprintf("%d", expires)},
+		"skn": {h.sasKeyName},
+	}
 
-	return token
+	return fmt.Sprintf("SharedAccessSignature %s", tokenParams.Encode())
 }
 
 // generateExpirationTimestamp generates token expiration timestamp value

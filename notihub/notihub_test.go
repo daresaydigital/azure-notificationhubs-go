@@ -312,20 +312,28 @@ func TestNotificationHubSendFanout(t *testing.T) {
 		}
 
 		obtainedAuthToken := obtainedReq.Header.Get("Authorization")
-		queryMap, _ := url.ParseQuery(obtainedAuthToken)
+		expectedTokenPrefix := "SharedAccessSignature "
 
-		expectedURI := fmt.Sprintf("%s://%s", stdURL.Scheme, scheduleURL.Host)
-		if len(queryMap["SharedAccessSignature sr"]) == 0 || queryMap["SharedAccessSignature sr"][0] != expectedURI {
-			t.Errorf(errfmt, "token target uri", expectedURI, queryMap["SharedAccessSignature sr"])
+		var authTokenParams string
+		if !strings.HasPrefix(obtainedAuthToken, expectedTokenPrefix) {
+			t.Fatalf(errfmt, "auth token prefix", expectedTokenPrefix, strings.Split(obtainedAuthToken, " ")[0])
+		} else {
+			authTokenParams = strings.TrimPrefix(obtainedAuthToken, expectedTokenPrefix)
 		}
 
-		expectedSig := "HC0yaLhK4cIE1aAU5CjcnrCCD8TBePkJ1ZXelQrYbSI="
+		queryMap, _ := url.ParseQuery(authTokenParams)
+
+		expectedURI := (&url.URL{Host: scheduleURL.Host, Scheme: scheduleURL.Scheme}).String()
+		if len(queryMap["sr"]) == 0 || queryMap["sr"][0] != expectedURI {
+			t.Errorf(errfmt, "token target uri", expectedURI, queryMap["sr"])
+		}
+
+		expectedSig := "gbQ5tD5dkCLLu6FavSBKu4b7EAPeFqF7XEoDOada6ww="
 		if len(queryMap["sig"]) == 0 || queryMap["sig"][0] != expectedSig {
 			t.Errorf(errfmt, "token signature", expectedSig, queryMap["sig"][0])
 		}
 
 		obtainedExpStr := queryMap["se"]
-
 		if len(obtainedExpStr) == 0 {
 			t.Errorf(errfmt, "token expiration", nhub.expirationTimeGenerator.GenerateTimestamp(), obtainedExpStr)
 		}
