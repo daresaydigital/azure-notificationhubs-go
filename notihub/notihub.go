@@ -24,6 +24,7 @@ import (
 const (
 	apiVersionParam = "api-version"
 	apiVersionValue = "2015-01"
+	directParam     = "direct"
 	scheme          = "https"
 )
 
@@ -88,6 +89,7 @@ type (
 		regPath                 string
 		stdURL                  *url.URL
 		scheduleURL             *url.URL
+		directURL               *url.URL
 		client                  HubClient
 		expirationTimeGenerator expirationTimeGenerator
 
@@ -201,6 +203,14 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 		RawQuery: query.Encode(),
 	}
 
+	query.Add(directParam, "")
+	hub.directURL = &url.URL{
+		Host:     endpoint,
+		Scheme:   scheme,
+		Path:     hub.stdURL.Path,
+		RawQuery: query.Encode(),
+	}
+
 	hub.regPath = path.Join(hubPath, "registrations")
 
 	hub.client = &hubHttpClient{&http.Client{}}
@@ -218,6 +228,15 @@ func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error)
 	b, err := h.send(n, orTags, nil)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationHub.Send: %s", err)
+	}
+
+	return b, nil
+}
+
+func (h *NotificationHub) SendDirect(n *Notification, deviceHandle string) ([]byte, error) {
+	b, err := h.sendDirect(n, deviceHandle)
+	if err != nil {
+		return nil, fmt.Errorf("NotificationHub.SendDirect: %s", err)
 	}
 
 	return b, nil
@@ -256,6 +275,30 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 	}
 
 	req, err := http.NewRequest("POST", urlStr, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	for header, val := range headers {
+		req.Header.Set(header, val)
+	}
+
+	return h.client.Exec(req)
+}
+
+func (h *NotificationHub) sendDirect(n *Notification, deviceHandle string) ([]byte, error) {
+	token := h.generateSasToken()
+	buf := bytes.NewBuffer(n.Payload)
+
+	headers := map[string]string{
+		"Authorization":                       token,
+		"Content-Type":                        n.Format.GetContentType(),
+		"ServiceBusNotification-Format":       string(n.Format),
+		"ServiceBusNotification-DeviceHandle": deviceHandle,
+		"X-Apns-Expiration":                   string(generateExpirationTimestamp()), //apns-expiration
+	}
+
+	req, err := http.NewRequest("POST", h.directURL.String(), buf)
 	if err != nil {
 		return nil, err
 	}
