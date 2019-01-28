@@ -191,6 +191,7 @@ func TestNewNotificationHub(t *testing.T) {
 	errfmt := "NewNotificationHub test case %d error. Expected %s: %v, got: %v"
 
 	queryString := url.Values{apiVersionParam: {apiVersionValue}}.Encode()
+	queryStringDirect := url.Values{apiVersionParam: {apiVersionValue}, directParam: {""}}.Encode()
 	hubPath := "testhub"
 	testCases := []struct {
 		connectionString string
@@ -202,6 +203,7 @@ func TestNewNotificationHub(t *testing.T) {
 				sasKeyValue:             "testAccessKey",
 				sasKeyName:              "testAccessKeyName",
 				host:                    "testhub-ns.servicebus.windows.net",
+				directURL:               &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryStringDirect},
 				stdURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
 				scheduleURL:             &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
@@ -214,6 +216,7 @@ func TestNewNotificationHub(t *testing.T) {
 				sasKeyValue:             "",
 				sasKeyName:              "",
 				host:                    "",
+				directURL:               &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryStringDirect},
 				stdURL:                  &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
 				scheduleURL:             &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
@@ -231,6 +234,10 @@ func TestNewNotificationHub(t *testing.T) {
 
 		if obtainedNotificationHub.sasKeyName != testCase.expectedHub.sasKeyName {
 			t.Errorf(errfmt, i, "NotificationHub.sasKeyName", testCase.expectedHub.sasKeyName, obtainedNotificationHub.sasKeyName)
+		}
+
+		if !reflect.DeepEqual(obtainedNotificationHub.directURL, testCase.expectedHub.directURL) {
+			t.Errorf(errfmt, i, "NotificationHub.directURL", testCase.expectedHub.directURL, testCase.expectedHub.directURL)
 		}
 
 		if !reflect.DeepEqual(obtainedNotificationHub.stdURL, testCase.expectedHub.stdURL) {
@@ -412,7 +419,7 @@ func TestNotificationSendError(t *testing.T) {
 		errfmt        = "Expected %s: %v, got: %v"
 		expectedError = errors.New("test error")
 
-		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		stdURL = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
 	)
 
 	mockClient := &mockHubHttpClient{}
