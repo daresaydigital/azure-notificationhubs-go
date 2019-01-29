@@ -6,6 +6,7 @@ package notihub
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -224,8 +225,8 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 }
 
 // Send publishes notification to the azure hub
-func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error) {
-	b, err := h.send(n, orTags, nil)
+func (h *NotificationHub) Send(ctx context.Context, n *Notification, orTags []string) ([]byte, error) {
+	b, err := h.send(ctx, n, orTags, nil)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationHub.Send: %s", err)
 	}
@@ -233,8 +234,8 @@ func (h *NotificationHub) Send(n *Notification, orTags []string) ([]byte, error)
 	return b, nil
 }
 
-func (h *NotificationHub) SendDirect(n *Notification, deviceHandle string) ([]byte, error) {
-	b, err := h.sendDirect(n, deviceHandle)
+func (h *NotificationHub) SendDirect(ctx context.Context, n *Notification, deviceHandle string) ([]byte, error) {
+	b, err := h.sendDirect(ctx, n, deviceHandle)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationHub.SendDirect: %s", err)
 	}
@@ -243,8 +244,8 @@ func (h *NotificationHub) SendDirect(n *Notification, deviceHandle string) ([]by
 }
 
 // Schedule pusblishes a scheduled notification to azure notification hub
-func (h *NotificationHub) Schedule(n *Notification, orTags []string, deliverTime time.Time) ([]byte, error) {
-	b, err := h.send(n, orTags, &deliverTime)
+func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, orTags []string, deliverTime time.Time) ([]byte, error) {
+	b, err := h.send(ctx, n, orTags, &deliverTime)
 	if err != nil {
 		return nil, fmt.Errorf("NotificationHub.Schedule: %s", err)
 	}
@@ -253,7 +254,7 @@ func (h *NotificationHub) Schedule(n *Notification, orTags []string, deliverTime
 }
 
 // send sends notification to the azure hub
-func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *time.Time) ([]byte, error) {
+func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []string, deliverTime *time.Time) ([]byte, error) {
 	token := h.generateSasToken()
 	buf := bytes.NewBuffer(n.Payload)
 
@@ -280,6 +281,7 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 
 	for header, val := range headers {
 		req.Header.Set(header, val)
@@ -288,7 +290,7 @@ func (h *NotificationHub) send(n *Notification, orTags []string, deliverTime *ti
 	return h.client.Exec(req)
 }
 
-func (h *NotificationHub) sendDirect(n *Notification, deviceHandle string) ([]byte, error) {
+func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, deviceHandle string) ([]byte, error) {
 	token := h.generateSasToken()
 	buf := bytes.NewBuffer(n.Payload)
 
@@ -304,6 +306,7 @@ func (h *NotificationHub) sendDirect(n *Notification, deviceHandle string) ([]by
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 
 	for header, val := range headers {
 		req.Header.Set(header, val)

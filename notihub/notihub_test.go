@@ -1,6 +1,7 @@
 package notihub
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -357,7 +358,7 @@ func TestNotificationHubSendFanout(t *testing.T) {
 		return nil, nil
 	}
 
-	b, err := nhub.Send(notification, nil)
+	b, err := nhub.Send(context.Background(), notification, nil)
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -404,7 +405,7 @@ func TestNotificationHubSendCategories(t *testing.T) {
 		return nil, nil
 	}
 
-	b, err := nhub.Send(notification, orTags)
+	b, err := nhub.Send(context.Background(), notification, orTags)
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -439,7 +440,7 @@ func TestNotificationSendError(t *testing.T) {
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
-	b, obtainedErr := nhub.Send(&Notification{AndroidFormat, []byte("test payload")}, nil)
+	b, obtainedErr := nhub.Send(context.Background(), &Notification{AndroidFormat, []byte("test payload")}, nil)
 	if b != nil {
 		t.Errorf(errfmt, "Send []byte", nil, b)
 	}
@@ -477,7 +478,7 @@ func TestNotificationScheduleSuccess(t *testing.T) {
 		return nil, nil
 	}
 
-	b, err := nhub.Schedule(notification, nil, time.Now().Add(time.Minute))
+	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -517,7 +518,7 @@ func TestNotificationScheduleOutdated(t *testing.T) {
 		return nil, nil
 	}
 
-	b, err := nhub.Schedule(notification, nil, time.Now().Add(-time.Minute))
+	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -554,7 +555,7 @@ func TestNotificationScheduleError(t *testing.T) {
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
-	b, obtainedErr := nhub.Schedule(&Notification{AndroidFormat, []byte("test payload")}, nil, time.Now().Add(time.Minute))
+	b, obtainedErr := nhub.Schedule(context.Background(), &Notification{AndroidFormat, []byte("test payload")}, nil, time.Now().Add(time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "Send []byte", nil, b)
 	}
