@@ -26,7 +26,13 @@ const (
 	apiVersionParam = "api-version"
 	apiVersionValue = "2015-01"
 	directParam     = "direct"
-	scheme          = "https"
+
+	// for connection string parsing
+	serviceBusScheme   = "sb"
+	defaultScheme      = "https"
+	prefixEndpoint     = "Endpoint="
+	prefixSaasKeyName  = "SharedAccessKeyName="
+	prefixSaasKeyValue = "SharedAccessKey="
 )
 
 const (
