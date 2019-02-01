@@ -170,27 +170,36 @@ func (n *Notification) String() string {
 func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 	connData := strings.Split(connectionString, ";")
 
-	hub := &NotificationHub{}
-	var endpoint string
+	hub := &NotificationHub{
+		baseURL: &url.URL{},
+	}
 
 	for _, connItem := range connData {
-		if len(connItem) >= 14 && connItem[:8] == "Endpoint" {
-			endpoint = strings.Trim(connItem[14:], "/")
+		if strings.HasPrefix(connItem, prefixEndpoint) {
+			baseURL, err := url.Parse(connItem[len(prefixEndpoint):])
+			if err == nil {
+				hub.baseURL = baseURL
+			}
 			continue
 		}
 
-		if len(connItem) >= 20 && connItem[:19] == "SharedAccessKeyName" {
-			hub.sasKeyName = connItem[20:]
+		if strings.HasPrefix(connItem, prefixSaasKeyName) {
+			hub.sasKeyName = connItem[len(prefixSaasKeyName):]
 			continue
 		}
 
-		if len(connItem) >= 16 && connItem[:15] == "SharedAccessKey" {
-			hub.sasKeyValue = connItem[16:]
+		if strings.HasPrefix(connItem, prefixSaasKeyValue) {
+			hub.sasKeyValue = connItem[len(prefixSaasKeyValue):]
 			continue
 		}
 	}
 
-	query := url.Values{apiVersionParam: {apiVersionValue}}
+	if hub.baseURL.Scheme == serviceBusScheme || hub.baseURL.Scheme == "" {
+		hub.baseURL.Scheme = defaultScheme
+	}
+
+	hub.baseURL.Path = hubPath
+	hub.baseURL.RawQuery = url.Values{apiVersionParam: {apiVersionValue}}.Encode()
 
 	hub.host = endpoint
 	hub.stdURL = &url.URL{
