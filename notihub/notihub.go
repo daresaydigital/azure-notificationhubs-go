@@ -223,8 +223,6 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 		RawQuery: query.Encode(),
 	}
 
-	hub.regPath = path.Join(hubPath, "registrations")
-
 	hub.client = &hubHttpClient{&http.Client{}}
 	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
 
@@ -401,8 +399,6 @@ func (h *NotificationHub) Register(r Registration) (RegistrationRes, []byte, err
 		"Content-Type":  "application/atom+xml;type=entry;charset=utf-8",
 	}
 
-	regPath := h.regPath
-	method := "POST"
 	payload := ""
 
 	switch r.Service {
@@ -415,13 +411,19 @@ func (h *NotificationHub) Register(r Registration) (RegistrationRes, []byte, err
 	}
 	payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
 
-	if r.RegistrationId != "" {
-		regPath = path.Join(regPath, r.RegistrationId)
-		method = "PUT"
+	method := "POST"
+	regURL := url.URL{
+		Host:     h.baseURL.Host,
+		Scheme:   h.baseURL.Scheme,
+		Path:     path.Join(h.baseURL.Path, "registrations"),
+		RawQuery: h.baseURL.RawQuery,
 	}
-	query := url.Values{apiVersionParam: {apiVersionValue}}
 
-	regURL := url.URL{Host: h.host, Scheme: scheme, Path: regPath, RawQuery: query.Encode()}
+	if r.RegistrationId != "" {
+		method = "PUT"
+		regURL.Path = path.Join(regURL.Path, r.RegistrationId)
+	}
+
 	urlStr := regURL.String()
 	buf := bytes.NewBufferString(payload)
 	req, err := http.NewRequest(method, urlStr, buf)
