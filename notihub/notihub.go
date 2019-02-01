@@ -92,11 +92,7 @@ type (
 	NotificationHub struct {
 		sasKeyValue             string
 		sasKeyName              string
-		host                    string
-		regPath                 string
-		stdURL                  *url.URL
-		scheduleURL             *url.URL
-		directURL               *url.URL
+		baseURL                 *url.URL
 		client                  HubClient
 		expirationTimeGenerator expirationTimeGenerator
 
