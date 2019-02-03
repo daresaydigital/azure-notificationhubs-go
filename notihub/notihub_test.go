@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"reflect"
 	"strconv"
 	"strings"
@@ -15,7 +14,7 @@ import (
 	"time"
 )
 
-func TestNotificationFormatIsValid(t *testing.T) {
+func Test_NotificationFormatIsValid(t *testing.T) {
 	testCases := []struct {
 		format  NotificationFormat
 		isValid bool
@@ -62,7 +61,7 @@ func TestNotificationFormatIsValid(t *testing.T) {
 	}
 }
 
-func TestNotificationFormatGetContentType(t *testing.T) {
+func Test_NotificationFormatGetContentType(t *testing.T) {
 	testCases := []struct {
 		format   NotificationFormat
 		expected string
@@ -105,7 +104,7 @@ func TestNotificationFormatGetContentType(t *testing.T) {
 	}
 }
 
-func TestNewNotication(t *testing.T) {
+func Test_NewNotication(t *testing.T) {
 	testPayload := []byte("test payload")
 	errfmt := "NewNotification test case %d error. Expected %s: %v, got: %v"
 
@@ -178,7 +177,7 @@ func TestNewNotication(t *testing.T) {
 	}
 }
 
-func TestNotificationString(t *testing.T) {
+func Test_NotificationString(t *testing.T) {
 	n := &Notification{Template, []byte("test_payload")}
 
 	expectedString := fmt.Sprintf("&{%s %s}", n.Format, n.Payload)
@@ -188,11 +187,10 @@ func TestNotificationString(t *testing.T) {
 	}
 }
 
-func TestNewNotificationHub(t *testing.T) {
+func Test_NewNotificationHub(t *testing.T) {
 	errfmt := "NewNotificationHub test case %d error. Expected %s: %v, got: %v"
 
 	queryString := url.Values{apiVersionParam: {apiVersionValue}}.Encode()
-	queryStringDirect := url.Values{apiVersionParam: {apiVersionValue}, directParam: {""}}.Encode()
 	hubPath := "testhub"
 	testCases := []struct {
 		connectionString string
@@ -203,10 +201,7 @@ func TestNewNotificationHub(t *testing.T) {
 			expectedHub: &NotificationHub{
 				sasKeyValue:             "testAccessKey",
 				sasKeyName:              "testAccessKeyName",
-				host:                    "testhub-ns.servicebus.windows.net",
-				directURL:               &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryStringDirect},
-				stdURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
-				scheduleURL:             &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
+				hubURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: schemeDefault, Path: hubPath, RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
@@ -216,10 +211,7 @@ func TestNewNotificationHub(t *testing.T) {
 			expectedHub: &NotificationHub{
 				sasKeyValue:             "",
 				sasKeyName:              "",
-				host:                    "",
-				directURL:               &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryStringDirect},
-				stdURL:                  &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "messages"), RawQuery: queryString},
-				scheduleURL:             &url.URL{Host: "", Scheme: scheme, Path: path.Join(hubPath, "schedulednotifications"), RawQuery: queryString},
+				hubURL:                  &url.URL{Host: "", Scheme: schemeDefault, Path: hubPath, RawQuery: queryString},
 				client:                  &hubHttpClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
@@ -237,20 +229,10 @@ func TestNewNotificationHub(t *testing.T) {
 			t.Errorf(errfmt, i, "NotificationHub.sasKeyName", testCase.expectedHub.sasKeyName, obtainedNotificationHub.sasKeyName)
 		}
 
-		if !reflect.DeepEqual(obtainedNotificationHub.directURL, testCase.expectedHub.directURL) {
-			t.Errorf(errfmt, i, "NotificationHub.directURL", testCase.expectedHub.directURL, testCase.expectedHub.directURL)
-		}
-
-		if !reflect.DeepEqual(obtainedNotificationHub.stdURL, testCase.expectedHub.stdURL) {
-			t.Errorf(errfmt, i, "NotificationHub.stdURL", testCase.expectedHub.stdURL, testCase.expectedHub.stdURL)
-		}
-
-		if !reflect.DeepEqual(obtainedNotificationHub.scheduleURL, testCase.expectedHub.scheduleURL) {
-			t.Errorf(errfmt, i, "NotificationHub.scheduleURL", testCase.expectedHub.scheduleURL, testCase.expectedHub.scheduleURL)
-		}
-
-		if !reflect.DeepEqual(obtainedNotificationHub.client, testCase.expectedHub.client) {
-			t.Errorf(errfmt, i, "NotificationHub.client", testCase.expectedHub.client, testCase.expectedHub.client)
+		wantURL := testCase.expectedHub.hubURL.String()
+		gotURL := obtainedNotificationHub.hubURL.String()
+		if gotURL != wantURL {
+			t.Errorf(errfmt, i, "NotificationHub.hubURL", wantURL, gotURL)
 		}
 
 		expectedGeneratorType := reflect.ValueOf(testCase.expectedHub.expirationTimeGenerator).Type()
@@ -269,33 +251,36 @@ func (mc *mockHubHttpClient) Exec(req *http.Request) ([]byte, error) {
 	return mc.execFunc(req)
 }
 
-func TestNotificationHubSendFanout(t *testing.T) {
+func Test_NotificationHubSendFanout(t *testing.T) {
 	var (
 		errfmt       = "Expected %s: %v, got: %v"
-		notification = &Notification{Template, []byte("test_payload")}
+		notification = &Notification{Template, []byte("test payload")}
 
-		sasKeyName = "testKeyName"
-		host       = "testhost"
-
-		stdURL      = &url.URL{Host: host, Scheme: "https", Path: "std_url"}
-		scheduleURL = &url.URL{Host: host, Scheme: "https", Path: "schedule_url"}
+		baseURL = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
+		sasUri = (&url.URL{Host: baseURL.Host, Scheme: baseURL.Scheme}).String()
 	)
 
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
-		sasKeyName:              sasKeyName,
-		host:                    host,
-		stdURL:                  stdURL,
-		scheduleURL:             scheduleURL,
+		sasKeyName:              "testKeyName",
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
+	msgURL := "https://testHost/testPath/messages?queryParam=queryValue"
+
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		if obtainedReq.URL.String() != stdURL.String() {
-			t.Errorf(errfmt, "request URL", stdURL, obtainedReq.URL)
+		gotURL := obtainedReq.URL.String()
+		if gotURL != msgURL {
+			t.Errorf(errfmt, "request URL", msgURL, gotURL)
 		}
 
 		if obtainedReq.Method != "POST" {
@@ -331,7 +316,7 @@ func TestNotificationHubSendFanout(t *testing.T) {
 
 		queryMap, _ := url.ParseQuery(authTokenParams)
 
-		expectedURI := (&url.URL{Host: scheduleURL.Host, Scheme: scheduleURL.Scheme}).String()
+		expectedURI := strings.ToLower(sasUri)
 		if len(queryMap["sr"]) == 0 || queryMap["sr"][0] != expectedURI {
 			t.Errorf(errfmt, "token target uri", expectedURI, queryMap["sr"])
 		}
@@ -351,8 +336,8 @@ func TestNotificationHubSendFanout(t *testing.T) {
 			t.Errorf(errfmt, "token expiration", nhub.expirationTimeGenerator.GenerateTimestamp(), obtainedExp)
 		}
 
-		if len(queryMap["skn"]) == 0 || queryMap["skn"][0] != sasKeyName {
-			t.Errorf(errfmt, "token sas key name", sasKeyName, queryMap["skn"])
+		if len(queryMap["skn"]) == 0 || queryMap["skn"][0] != nhub.sasKeyName {
+			t.Errorf(errfmt, "token sas key name", nhub.sasKeyName, queryMap["skn"])
 		}
 
 		return nil, nil
@@ -368,29 +353,32 @@ func TestNotificationHubSendFanout(t *testing.T) {
 	}
 }
 
-func TestNotificationHubSendCategories(t *testing.T) {
+func Test_NotificationHubSendCategories(t *testing.T) {
 	var (
 		errfmt = "Expected %s: %v, got: %v"
 
 		orTags       = []string{"tag1", "tag2"}
 		notification = &Notification{Template, []byte("test_payload")}
 
-		sasKeyName = "testKeyName"
-
-		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
-		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+		baseURL = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
 	)
 
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
+		sasKeyName:              "testKeyName",
 		sasKeyValue:             "testKeyValue",
-		sasKeyName:              sasKeyName,
-		stdURL:                  stdURL,
-		scheduleURL:             scheduleURL,
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
+
+	msgURL := "https://testHost/testPath/messages?queryParam=queryValue"
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
 		expectedTags := strings.Join(orTags, " || ")
@@ -398,8 +386,9 @@ func TestNotificationHubSendCategories(t *testing.T) {
 			t.Errorf(errfmt, "ServiceBusNotification-Tags", expectedTags, obtainedReq.Header.Get("ServiceBusNotification-Tags"))
 		}
 
-		if obtainedReq.URL.String() != stdURL.String() {
-			t.Errorf(errfmt, "URL", stdURL, obtainedReq)
+		gotURL := obtainedReq.URL.String()
+		if gotURL != msgURL {
+			t.Errorf(errfmt, "URL", msgURL, gotURL)
 		}
 
 		return nil, nil
@@ -415,18 +404,25 @@ func TestNotificationHubSendCategories(t *testing.T) {
 	}
 }
 
-func TestNotificationSendError(t *testing.T) {
+func Test_NotificationSendError(t *testing.T) {
 	var (
 		errfmt        = "Expected %s: %v, got: %v"
 		expectedError = errors.New("test error")
 
-		stdURL = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
+		baseURL = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
 	)
+
+	msgURL := "https://testHost/testPath/messages?queryParam=queryValue"
 
 	mockClient := &mockHubHttpClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
-		if reqURL := req.URL.String(); reqURL != stdURL.String() {
-			t.Errorf(errfmt, "URL", stdURL, reqURL)
+		if reqURL := req.URL.String(); reqURL != msgURL {
+			t.Errorf(errfmt, "URL", msgURL, reqURL)
 		}
 
 		return nil, expectedError
@@ -435,7 +431,7 @@ func TestNotificationSendError(t *testing.T) {
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              "testKeyName",
-		stdURL:                  stdURL,
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
@@ -450,29 +446,34 @@ func TestNotificationSendError(t *testing.T) {
 	}
 }
 
-func TestNotificationScheduleSuccess(t *testing.T) {
+func Test_NotificationScheduleSuccess(t *testing.T) {
 	var (
 		errfmt       = "Expected %s: %v, got: %v"
 		notification = &Notification{Template, []byte("test_payload")}
-
-		sasKeyName = "testKeyName"
-
-		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+		baseURL      = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
 	)
 
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
-		sasKeyName:              sasKeyName,
-		scheduleURL:             scheduleURL,
+		sasKeyName:              "testKeyName",
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
+	schURL := "https://testHost/testPath/schedulednotifications?queryParam=queryValue"
+
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		if obtainedReq.URL.String() != scheduleURL.String() {
-			t.Errorf(errfmt, "URL", scheduleURL, obtainedReq)
+		gotURL := obtainedReq.URL.String()
+		if gotURL != schURL {
+			t.Errorf(errfmt, "URL", schURL, gotURL)
 		}
 
 		return nil, nil
@@ -488,31 +489,34 @@ func TestNotificationScheduleSuccess(t *testing.T) {
 	}
 }
 
-func TestNotificationScheduleOutdated(t *testing.T) {
+func Test_NotificationScheduleOutdated(t *testing.T) {
 	var (
 		errfmt       = "Expected %s: %v, got: %v"
 		notification = &Notification{Template, []byte("test_payload")}
 
-		sasKeyName = "testKeyName"
-
-		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
-		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+		baseURL = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
 	)
 
 	mockClient := &mockHubHttpClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
-		sasKeyName:              sasKeyName,
-		stdURL:                  stdURL,
-		scheduleURL:             scheduleURL,
+		sasKeyName:              "testKeyName",
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
 
+	schURL := "https://testHost/testPath/messages?queryParam=queryValue"
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		if obtainedReq.URL.String() != stdURL.String() {
-			t.Errorf(errfmt, "URL", scheduleURL, obtainedReq)
+		gotURL := obtainedReq.URL.String()
+		if gotURL != schURL {
+			t.Errorf(errfmt, "URL", schURL, gotURL)
 		}
 
 		return nil, nil
@@ -528,19 +532,26 @@ func TestNotificationScheduleOutdated(t *testing.T) {
 	}
 }
 
-func TestNotificationScheduleError(t *testing.T) {
+func Test_NotificationScheduleError(t *testing.T) {
 	var (
 		errfmt        = "Expected %s: %v, got: %v"
 		expectedError = errors.New("test schedule error")
 
-		stdURL      = &url.URL{Host: "testhost", Scheme: "https", Path: "std_path"}
-		scheduleURL = &url.URL{Host: "testhost", Scheme: "https", Path: "schedule_path"}
+		baseURL = &url.URL{
+			Host:     "testHost",
+			Scheme:   schemeDefault,
+			Path:     "testPath",
+			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
+		}
 	)
+
+	schURL := "https://testHost/testPath/schedulednotifications?queryParam=queryValue"
 
 	mockClient := &mockHubHttpClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
-		if req.URL.String() != scheduleURL.String() {
-			t.Errorf(errfmt, "URL", scheduleURL, scheduleURL)
+		gotURL := req.URL.String()
+		if gotURL != schURL {
+			t.Errorf(errfmt, "URL", schURL, gotURL)
 		}
 
 		return nil, expectedError
@@ -549,8 +560,7 @@ func TestNotificationScheduleError(t *testing.T) {
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
 		sasKeyName:              "testKeyName",
-		stdURL:                  stdURL,
-		scheduleURL:             scheduleURL,
+		hubURL:                  baseURL,
 		client:                  mockClient,
 		expirationTimeGenerator: expirationTimeGeneratorFunc(func() int64 { return 123 }),
 	}
