@@ -28,11 +28,11 @@ const (
 	directParam     = "direct"
 
 	// for connection string parsing
-	serviceBusScheme   = "sb"
-	defaultScheme      = "https"
-	prefixEndpoint     = "Endpoint="
-	prefixSaasKeyName  = "SharedAccessKeyName="
-	prefixSaasKeyValue = "SharedAccessKey="
+	schemeServiceBus  = "sb"
+	schemeDefault     = "https"
+	paramEndpoint     = "Endpoint="
+	paramSaasKeyName  = "SharedAccessKeyName="
+	paramSaasKeyValue = "SharedAccessKey="
 )
 
 const (
@@ -92,7 +92,7 @@ type (
 	NotificationHub struct {
 		sasKeyValue             string
 		sasKeyName              string
-		baseURL                 *url.URL
+		hubURL                  *url.URL
 		client                  HubClient
 		expirationTimeGenerator expirationTimeGenerator
 
@@ -171,57 +171,35 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 	connData := strings.Split(connectionString, ";")
 
 	hub := &NotificationHub{
-		baseURL: &url.URL{},
+		hubURL: &url.URL{},
 	}
 
 	for _, connItem := range connData {
-		if strings.HasPrefix(connItem, prefixEndpoint) {
-			baseURL, err := url.Parse(connItem[len(prefixEndpoint):])
+		if strings.HasPrefix(connItem, paramEndpoint) {
+			hubURL, err := url.Parse(connItem[len(paramEndpoint):])
 			if err == nil {
-				hub.baseURL = baseURL
+				hub.hubURL = hubURL
 			}
 			continue
 		}
 
-		if strings.HasPrefix(connItem, prefixSaasKeyName) {
-			hub.sasKeyName = connItem[len(prefixSaasKeyName):]
+		if strings.HasPrefix(connItem, paramSaasKeyName) {
+			hub.sasKeyName = connItem[len(paramSaasKeyName):]
 			continue
 		}
 
-		if strings.HasPrefix(connItem, prefixSaasKeyValue) {
-			hub.sasKeyValue = connItem[len(prefixSaasKeyValue):]
+		if strings.HasPrefix(connItem, paramSaasKeyValue) {
+			hub.sasKeyValue = connItem[len(paramSaasKeyValue):]
 			continue
 		}
 	}
 
-	if hub.baseURL.Scheme == serviceBusScheme || hub.baseURL.Scheme == "" {
-		hub.baseURL.Scheme = defaultScheme
+	if hub.hubURL.Scheme == schemeServiceBus || hub.hubURL.Scheme == "" {
+		hub.hubURL.Scheme = schemeDefault
 	}
 
-	hub.baseURL.Path = hubPath
-	hub.baseURL.RawQuery = url.Values{apiVersionParam: {apiVersionValue}}.Encode()
-
-	hub.host = endpoint
-	hub.stdURL = &url.URL{
-		Host:     endpoint,
-		Scheme:   scheme,
-		Path:     path.Join(hubPath, "messages"),
-		RawQuery: query.Encode(),
-	}
-	hub.scheduleURL = &url.URL{
-		Host:     endpoint,
-		Scheme:   scheme,
-		Path:     path.Join(hubPath, "schedulednotifications"),
-		RawQuery: query.Encode(),
-	}
-
-	query.Add(directParam, "")
-	hub.directURL = &url.URL{
-		Host:     endpoint,
-		Scheme:   scheme,
-		Path:     hub.stdURL.Path,
-		RawQuery: query.Encode(),
-	}
+	hub.hubURL.Path = hubPath
+	hub.hubURL.RawQuery = url.Values{apiVersionParam: {apiVersionValue}}.Encode()
 
 	hub.client = &hubHttpClient{&http.Client{}}
 	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
@@ -278,15 +256,21 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []st
 		headers["ServiceBusNotification-Tags"] = strings.Join(orTags, " || ")
 	}
 
-	var urlStr string
-	if deliverTime != nil && deliverTime.Unix() > time.Now().Unix() {
-		urlStr = h.scheduleURL.String()
-		headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
-	} else {
-		urlStr = h.stdURL.String()
+	url_ := &url.URL{
+		Host:     h.hubURL.Host,
+		Scheme:   h.hubURL.Scheme,
+		Path:     h.hubURL.Path,
+		RawQuery: h.hubURL.RawQuery,
 	}
 
-	req, err := http.NewRequest("POST", urlStr, buf)
+	if deliverTime != nil && deliverTime.Unix() > time.Now().Unix() {
+		url_.Path = path.Join(url_.Path, "schedulednotifications")
+		headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
+	} else {
+		url_.Path = path.Join(url_.Path, "messages")
+	}
+
+	req, err := http.NewRequest("POST", url_.String(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +295,17 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 		"X-Apns-Expiration":                   string(generateExpirationTimestamp()), //apns-expiration
 	}
 
-	req, err := http.NewRequest("POST", h.directURL.String(), buf)
+	query := h.hubURL.Query()
+	query.Add(directParam, "")
+
+	url_ := &url.URL{
+		Host:     h.hubURL.Host,
+		Scheme:   h.hubURL.Scheme,
+		Path:     path.Join(h.hubURL.Path, "messages"),
+		RawQuery: query.Encode(),
+	}
+
+	req, err := http.NewRequest("POST", url_.String(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +321,10 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 // generateSasToken generates and returns
 // azure notification hub shared access signatue token
 func (h *NotificationHub) generateSasToken() string {
-	uri := &url.URL{Scheme: scheme, Host: h.host}
+	uri := &url.URL{
+		Host: h.hubURL.Host,
+		Scheme: h.hubURL.Scheme,
+	}
 	targetUri := strings.ToLower(uri.String())
 
 	expires := h.expirationTimeGenerator.GenerateTimestamp()
@@ -413,10 +410,10 @@ func (h *NotificationHub) Register(r Registration) (RegistrationRes, []byte, err
 
 	method := "POST"
 	regURL := url.URL{
-		Host:     h.baseURL.Host,
-		Scheme:   h.baseURL.Scheme,
-		Path:     path.Join(h.baseURL.Path, "registrations"),
-		RawQuery: h.baseURL.RawQuery,
+		Host:     h.hubURL.Host,
+		Scheme:   h.hubURL.Scheme,
+		Path:     path.Join(h.hubURL.Path, "registrations"),
+		RawQuery: h.hubURL.RawQuery,
 	}
 
 	if r.RegistrationId != "" {
