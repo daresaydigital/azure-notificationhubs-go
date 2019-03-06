@@ -1,4 +1,4 @@
-package notihub
+package notificationhubs
 
 import (
 	"context"
@@ -202,7 +202,7 @@ func Test_NewNotificationHub(t *testing.T) {
 				sasKeyValue:             "testAccessKey",
 				sasKeyName:              "testAccessKeyName",
 				hubURL:                  &url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: schemeDefault, Path: hubPath, RawQuery: queryString},
-				client:                  &hubHttpClient{&http.Client{}},
+				client:                  &hubHTTPClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
 		},
@@ -212,7 +212,7 @@ func Test_NewNotificationHub(t *testing.T) {
 				sasKeyValue:             "",
 				sasKeyName:              "",
 				hubURL:                  &url.URL{Host: "", Scheme: schemeDefault, Path: hubPath, RawQuery: queryString},
-				client:                  &hubHttpClient{&http.Client{}},
+				client:                  &hubHTTPClient{&http.Client{}},
 				expirationTimeGenerator: expirationTimeGeneratorFunc(generateExpirationTimestamp),
 			},
 		},
@@ -243,15 +243,15 @@ func Test_NewNotificationHub(t *testing.T) {
 	}
 }
 
-type mockHubHttpClient struct {
+type mockHubHTTPClient struct {
 	execFunc func(*http.Request) ([]byte, error)
 }
 
-func (mc *mockHubHttpClient) Exec(req *http.Request) ([]byte, error) {
+func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, error) {
 	return mc.execFunc(req)
 }
 
-func Test_NotificationHubSendFanout(t *testing.T) {
+func Test_NotificationHubendFanout(t *testing.T) {
 	var (
 		errfmt       = "Expected %s: %v, got: %v"
 		notification = &Notification{Template, []byte("test payload")}
@@ -262,10 +262,10 @@ func Test_NotificationHubSendFanout(t *testing.T) {
 			Path:     "testPath",
 			RawQuery: url.Values{"queryParam": {"queryValue"}}.Encode(),
 		}
-		sasUri = (&url.URL{Host: baseURL.Host, Scheme: baseURL.Scheme}).String()
+		sasURI = (&url.URL{Host: baseURL.Host, Scheme: baseURL.Scheme}).String()
 	)
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
@@ -316,7 +316,7 @@ func Test_NotificationHubSendFanout(t *testing.T) {
 
 		queryMap, _ := url.ParseQuery(authTokenParams)
 
-		expectedURI := strings.ToLower(sasUri)
+		expectedURI := strings.ToLower(sasURI)
 		if len(queryMap["sr"]) == 0 || queryMap["sr"][0] != expectedURI {
 			t.Errorf(errfmt, "token target uri", expectedURI, queryMap["sr"])
 		}
@@ -353,7 +353,7 @@ func Test_NotificationHubSendFanout(t *testing.T) {
 	}
 }
 
-func Test_NotificationHubSendCategories(t *testing.T) {
+func Test_NotificationHubendCategories(t *testing.T) {
 	var (
 		errfmt = "Expected %s: %v, got: %v"
 
@@ -368,7 +368,7 @@ func Test_NotificationHubSendCategories(t *testing.T) {
 		}
 	)
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 
 	nhub := &NotificationHub{
 		sasKeyName:              "testKeyName",
@@ -419,7 +419,7 @@ func Test_NotificationSendError(t *testing.T) {
 
 	msgURL := "https://testHost/testPath/messages?queryParam=queryValue"
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
 		if reqURL := req.URL.String(); reqURL != msgURL {
 			t.Errorf(errfmt, "URL", msgURL, reqURL)
@@ -458,7 +458,7 @@ func Test_NotificationScheduleSuccess(t *testing.T) {
 		}
 	)
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
@@ -502,7 +502,7 @@ func Test_NotificationScheduleOutdated(t *testing.T) {
 		}
 	)
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 
 	nhub := &NotificationHub{
 		sasKeyValue:             "testKeyValue",
@@ -547,7 +547,7 @@ func Test_NotificationScheduleError(t *testing.T) {
 
 	schURL := "https://testHost/testPath/schedulednotifications?queryParam=queryValue"
 
-	mockClient := &mockHubHttpClient{}
+	mockClient := &mockHubHTTPClient{}
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
 		gotURL := req.URL.String()
 		if gotURL != schURL {

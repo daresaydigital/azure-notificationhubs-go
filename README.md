@@ -1,43 +1,40 @@
-About
------
+# Azure Notification Hubs for Go(lang)
 
-The library provides a Microsoft Azure Notification Hub Client for backend applications.
+This library provides a Microsoft Azure Notification Hubs Client for backend applications.
+It is packaged as a Go module to and is tested with Go 1.11+.
 
-Installing
-----------
+Originally a fork from [Gozure](https://github.com/onefootball/gozure) with patches
+from [Martin Etnestad](https://github.com/gnawybol).
+
+Now maintained and packaged by [Daresay AB](https://daresay.co), [@daresaydigital](https://github.com/daresaydigital).
+
+## Installing
 
 Using go get
 
-```
-$ go get github.com/onefootball/gozure/notihub
-```
-
-The package will be available under the following path:
-
-```
-$GOPATH/src/github.com/onefootball/gozure/notihub
+```sh
+$ go get github.com/daresaydigital/azure-notificationhubs-go
 ```
 
-Usage
------
+## Usage
 
 ```go
-package main
+package notificationhubs
 
 import (
     "fmt"
-    "github.com/onefootball/gozure/notihub"
+    "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
 func main() {
     payload := []byte(`{"title": "Hello Hub!"}`)
 
-    n, err := notihub.NewNotification(notihub.Template, payload)
+    n, err := notificationhubs.NewNotification(notificationhubs.Template, payload)
     if err != nil {
         panic(err)
     }
 
-    hub := notihub.NewNotificationHub("YOUR_DefaultFullSharedAccessSignature", "YOUR_HubPath")
+    hub := notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
 
     // broadcast push
     b, err := hub.Send(n, nil)
@@ -57,6 +54,12 @@ func main() {
 }
 ```
 
-License
--------
+## Changelog
+
+### v0.0.1
+First release by Daresay. Restructured the code and renamed the API according to
+Go standards.
+
+## License
+
 See the [LICENSE](LICENSE.txt) file for license rights and limitations (MIT).

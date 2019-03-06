@@ -1,0 +1,6 @@
+{
+  "go.buildOnSave": "workspace",
+  "go.gocodeAutoBuild": true,
+  "go.useCodeSnippetsOnFunctionSuggestWithoutType": true,
+  "go.coverOnSave": true
+}
