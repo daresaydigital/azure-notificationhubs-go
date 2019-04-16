@@ -88,4 +88,12 @@ type (
 		// ExpirationTime
 		ExpirationTime time.Time
 	}
+
+	// Registrations is a list of RegistrationResults
+	Registrations struct {
+		Feed struct {
+			Title   string               `xml:"title"`
+			Entries []RegistrationResult `xml:"entry"`
+		} `xml:"feed"`
+	}
 )

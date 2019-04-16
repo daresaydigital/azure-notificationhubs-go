@@ -1,6 +1,6 @@
 // Package notificationhubs represents an http client
 // for Microsoft Azure Notification Hub
-// Originaly a fork of Gozure https://github.com/Onefootball/gozure
+// Originally a fork of Gozure https://github.com/Onefootball/gozure
 package notificationhubs
 
 import (
