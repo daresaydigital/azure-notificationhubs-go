@@ -10,7 +10,7 @@ type (
 	}
 )
 
-// NewNotification initalizes and returns Notification pointer
+// NewNotification initializes and returns a Notification pointer
 func NewNotification(format NotificationFormat, payload []byte) (*Notification, error) {
 	if !format.IsValid() {
 		return nil, fmt.Errorf("unknown format '%s'", format)

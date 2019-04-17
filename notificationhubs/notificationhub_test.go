@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	nh "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
+	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
 )
 
 func Test_NewNotificationHub(t *testing.T) {
@@ -42,7 +42,7 @@ func Test_NewNotificationHub(t *testing.T) {
 	)
 
 	for i, testCase := range testCases {
-		obtainedNotificationHub := nh.NewNotificationHub(testCase.connectionString, hubPath)
+		obtainedNotificationHub := NewNotificationHub(testCase.connectionString, hubPath)
 
 		if obtainedNotificationHub.SasKeyValue != testCase.expectedHub.SasKeyValue {
 			t.Errorf(errfmt, i, "NotificationHub.SasKeyValue", testCase.expectedHub.SasKeyValue, obtainedNotificationHub.SasKeyValue)
@@ -213,23 +213,17 @@ func Test_NotificationScheduleSuccess(t *testing.T) {
 }
 
 func Test_NotificationScheduleOutdated(t *testing.T) {
-	nhub, notification, mockClient := initTestItems()
-
-	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		gotURL := obtainedReq.URL.String()
-		if gotURL != schedulesURL {
-			t.Errorf(errfmt, "URL", schedulesURL, gotURL)
-		}
-
-		return nil, nil
-	}
-
+	var (
+		expectedError         = errors.New("You can not schedule a notification in the past")
+		nhub, notification, _ = initTestItems()
+	)
 	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
-	if err != nil {
-		t.Errorf(errfmt, "error", nil, err)
+
+	if !strings.Contains(err.Error(), expectedError.Error()) {
+		t.Errorf(errfmt, "Send error", expectedError, err)
 	}
 }
 

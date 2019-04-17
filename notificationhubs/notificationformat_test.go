@@ -3,41 +3,41 @@ package notificationhubs_test
 import (
 	"testing"
 
-	nh "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
+	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
 )
 
 func TestNotificationFormat_GetContentType(t *testing.T) {
 	var (
 		testCases = []struct {
-			format   nh.NotificationFormat
+			format   NotificationFormat
 			expected string
 		}{
 			{
-				format:   nh.Template,
+				format:   Template,
 				expected: "application/json",
 			},
 			{
-				format:   nh.AndroidFormat,
+				format:   AndroidFormat,
 				expected: "application/json",
 			},
 			{
-				format:   nh.AppleFormat,
+				format:   AppleFormat,
 				expected: "application/json",
 			},
 			{
-				format:   nh.BaiduFormat,
+				format:   BaiduFormat,
 				expected: "application/json",
 			},
 			{
-				format:   nh.KindleFormat,
+				format:   KindleFormat,
 				expected: "application/json",
 			},
 			{
-				format:   nh.WindowsFormat,
+				format:   WindowsFormat,
 				expected: "application/xml",
 			},
 			{
-				format:   nh.WindowsPhoneFormat,
+				format:   WindowsPhoneFormat,
 				expected: "application/xml",
 			},
 		}
@@ -54,39 +54,39 @@ func TestNotificationFormat_GetContentType(t *testing.T) {
 func TestNotificationFormat_IsValid(t *testing.T) {
 	var (
 		testCases = []struct {
-			format  nh.NotificationFormat
+			format  NotificationFormat
 			isValid bool
 		}{
 			{
-				format:  nh.Template,
+				format:  Template,
 				isValid: true,
 			},
 			{
-				format:  nh.AndroidFormat,
+				format:  AndroidFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.AppleFormat,
+				format:  AppleFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.BaiduFormat,
+				format:  BaiduFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.KindleFormat,
+				format:  KindleFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.WindowsFormat,
+				format:  WindowsFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.WindowsPhoneFormat,
+				format:  WindowsPhoneFormat,
 				isValid: true,
 			},
 			{
-				format:  nh.NotificationFormat("wrong_format"),
+				format:  NotificationFormat("wrong_format"),
 				isValid: false,
 			},
 		}

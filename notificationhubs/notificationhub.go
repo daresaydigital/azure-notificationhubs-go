@@ -207,9 +207,13 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []st
 		headers["ServiceBusNotification-Tags"] = strings.Join(orTags, " || ")
 	}
 
-	if deliverTime != nil && deliverTime.Unix() > time.Now().Unix() {
-		_url.Path = path.Join(_url.Path, "schedulednotifications")
-		headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
+	if deliverTime != nil {
+		if deliverTime.After(time.Now()) {
+			_url.Path = path.Join(_url.Path, "schedulednotifications")
+			headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
+		} else {
+			return nil, errors.New("You can not schedule a notification in the past")
+		}
 	} else {
 		_url.Path = path.Join(_url.Path, "messages")
 	}

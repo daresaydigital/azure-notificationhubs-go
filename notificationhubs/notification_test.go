@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	nh "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
+	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
 )
 
 func TestNewNotification(t *testing.T) {
@@ -13,55 +13,55 @@ func TestNewNotification(t *testing.T) {
 		errfmt      = "NewNotification test case %d error. Expected %s: %v, got: %v"
 
 		testCases = []struct {
-			format               nh.NotificationFormat
+			format               NotificationFormat
 			payload              []byte
-			expectedNotification *nh.Notification
+			expectedNotification *Notification
 			hasErr               bool
 		}{
 			{
-				format:               nh.Template,
+				format:               Template,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.Template, Payload: testPayload},
+				expectedNotification: &Notification{Format: Template, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.AndroidFormat,
+				format:               AndroidFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.AndroidFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: AndroidFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.AppleFormat,
+				format:               AppleFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.AppleFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: AppleFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.BaiduFormat,
+				format:               BaiduFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.BaiduFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: BaiduFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.KindleFormat,
+				format:               KindleFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.KindleFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: KindleFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.WindowsFormat,
+				format:               WindowsFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.WindowsFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: WindowsFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.WindowsPhoneFormat,
+				format:               WindowsPhoneFormat,
 				payload:              testPayload,
-				expectedNotification: &nh.Notification{Format: nh.WindowsPhoneFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: WindowsPhoneFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{
-				format:               nh.NotificationFormat("unknown_format"),
+				format:               NotificationFormat("unknown_format"),
 				payload:              testPayload,
 				expectedNotification: nil,
 				hasErr:               true,
@@ -70,7 +70,7 @@ func TestNewNotification(t *testing.T) {
 	)
 
 	for i, testCase := range testCases {
-		obtainedNotification, obtainedErr := nh.NewNotification(testCase.format, testCase.payload)
+		obtainedNotification, obtainedErr := NewNotification(testCase.format, testCase.payload)
 
 		if !reflect.DeepEqual(obtainedNotification, testCase.expectedNotification) {
 			t.Errorf(errfmt, i, "Notification", testCase.expectedNotification, obtainedNotification)
