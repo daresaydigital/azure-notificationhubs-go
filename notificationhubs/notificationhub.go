@@ -22,20 +22,72 @@ import (
 
 // NotificationHub is a client for sending messages through Azure Notification Hubs
 type NotificationHub struct {
-	sasKeyValue             string
-	sasKeyName              string
-	hubURL                  *url.URL
+	SasKeyValue string
+	SasKeyName  string
+	HubURL      *url.URL
+
 	client                  utils.HTTPClient
 	expirationTimeGenerator utils.ExpirationTimeGenerator
+	regIDPath               *xmlpath.Path
+	eTagPath                *xmlpath.Path
+	expTmPath               *xmlpath.Path
+}
 
-	regIDPath *xmlpath.Path
-	eTagPath  *xmlpath.Path
-	expTmPath *xmlpath.Path
+// NewNotificationHub initializes and returns NotificationHub pointer
+func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
+	var (
+		connData    = strings.Split(connectionString, ";")
+		_url        = &url.URL{}
+		sasKeyName  = ""
+		sasKeyValue = ""
+	)
+	for _, connItem := range connData {
+		if strings.HasPrefix(connItem, paramEndpoint) {
+			hubURL, err := url.Parse(connItem[len(paramEndpoint):])
+			if err == nil {
+				_url = hubURL
+			}
+			continue
+		}
+
+		if strings.HasPrefix(connItem, paramSaasKeyName) {
+			sasKeyName = connItem[len(paramSaasKeyName):]
+			continue
+		}
+
+		if strings.HasPrefix(connItem, paramSaasKeyValue) {
+			sasKeyValue = connItem[len(paramSaasKeyValue):]
+			continue
+		}
+	}
+
+	if _url.Scheme == schemeServiceBus || _url.Scheme == "" {
+		_url.Scheme = schemeDefault
+	}
+
+	_url.Path = hubPath
+	_url.RawQuery = url.Values{apiVersionParam: {apiVersionValue}}.Encode()
+	return &NotificationHub{
+		SasKeyName:  sasKeyName,
+		SasKeyValue: sasKeyValue,
+		HubURL:      _url,
+
+		client:                  utils.NewHubHTTPClient(),
+		expirationTimeGenerator: utils.NewExpirationTimeGenerator(),
+		regIDPath:               xmlpath.MustCompile("/entry/content/*/RegistrationId"),
+		eTagPath:                xmlpath.MustCompile("/entry/content/*/ETag"),
+		expTmPath:               xmlpath.MustCompile("/entry/content/*/ExpirationTime"),
+	}
 }
 
 // SetHTTPClient makes it possible to use a custom http client
 func (h *NotificationHub) SetHTTPClient(c utils.HTTPClient) {
 	h.client = c
+}
+
+// SetExpirationTimeGenerator makes is possible to use a custom generator
+func (h *NotificationHub) SetExpirationTimeGenerator(e utils.ExpirationTimeGenerator) {
+	h.expirationTimeGenerator = e
 }
 
 // Send publishes notification
@@ -173,13 +225,13 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 			"ServiceBusNotification-DeviceHandle": deviceHandle,
 			"X-Apns-Expiration":                   string(h.expirationTimeGenerator.GenerateTimestamp()), //apns-expiration
 		}
-		query = h.hubURL.Query()
+		query = h.HubURL.Query()
 	)
 	query.Add(directParam, "")
 	_url := &url.URL{
-		Host:     h.hubURL.Host,
-		Scheme:   h.hubURL.Scheme,
-		Path:     path.Join(h.hubURL.Path, "messages"),
+		Host:     h.HubURL.Host,
+		Scheme:   h.HubURL.Scheme,
+		Path:     path.Join(h.HubURL.Path, "messages"),
 		RawQuery: query.Encode(),
 	}
 	return h.exec(ctx, "POST", _url, headers, bytes.NewBuffer(n.Payload))
@@ -189,15 +241,15 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 // azure notification hub shared access signatue token
 func (h *NotificationHub) generateSasToken() string {
 	uri := &url.URL{
-		Host:   h.hubURL.Host,
-		Scheme: h.hubURL.Scheme,
+		Host:   h.HubURL.Host,
+		Scheme: h.HubURL.Scheme,
 	}
 	targetURI := strings.ToLower(uri.String())
 
 	expires := h.expirationTimeGenerator.GenerateTimestamp()
 	toSign := fmt.Sprintf("%s\n%d", url.QueryEscape(targetURI), expires)
 
-	mac := hmac.New(sha256.New, []byte(h.sasKeyValue))
+	mac := hmac.New(sha256.New, []byte(h.SasKeyValue))
 	mac.Write([]byte(toSign))
 	macb := mac.Sum(nil)
 
@@ -207,7 +259,7 @@ func (h *NotificationHub) generateSasToken() string {
 		"sr":  {targetURI},
 		"sig": {signature},
 		"se":  {fmt.Sprintf("%d", expires)},
-		"skn": {h.sasKeyName},
+		"skn": {h.SasKeyName},
 	}
 
 	return fmt.Sprintf("SharedAccessSignature %s", tokenParams.Encode())
@@ -230,9 +282,9 @@ func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL,
 // generate an URL for path
 func (h *NotificationHub) generateAPIURL(endpoint string) *url.URL {
 	return &url.URL{
-		Host:     h.hubURL.Host,
-		Scheme:   h.hubURL.Scheme,
-		Path:     path.Join(h.hubURL.Path, endpoint),
-		RawQuery: h.hubURL.RawQuery,
+		Host:     h.HubURL.Host,
+		Scheme:   h.HubURL.Scheme,
+		Path:     path.Join(h.HubURL.Path, endpoint),
+		RawQuery: h.HubURL.RawQuery,
 	}
 }
