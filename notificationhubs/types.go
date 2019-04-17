@@ -59,6 +59,9 @@ const (
 )
 
 type (
+	// Headers structure
+	Headers map[string]string
+
 	// Registration is a device registration to the hub
 	Registration struct {
 		// RegistrationID id of the registration

@@ -5,11 +5,12 @@ package notificationhubs
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"gopkg.in/xmlpath.v2"
+
+	"github.com/daresaydigital/azure-notificationhubs-go/notificationhubs/utils"
 )
 
 // NewNotificationHub initializes and returns NotificationHub pointer
@@ -47,8 +48,8 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 	hub.hubURL.Path = hubPath
 	hub.hubURL.RawQuery = url.Values{apiVersionParam: {apiVersionValue}}.Encode()
 
-	hub.client = &hubHTTPClient{&http.Client{}}
-	hub.expirationTimeGenerator = expirationTimeGeneratorFunc(generateExpirationTimestamp)
+	hub.client = utils.NewHubHTTPClient()
+	hub.expirationTimeGenerator = utils.NewExpirationTimeGenerator()
 
 	hub.regIDPath = xmlpath.MustCompile("/entry/content/*/RegistrationId")
 	hub.eTagPath = xmlpath.MustCompile("/entry/content/*/ETag")

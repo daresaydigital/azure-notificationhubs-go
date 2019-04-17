@@ -10,44 +10,33 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/daresaydigital/azure-notificationhubs-go/notificationhubs/utils"
 	"gopkg.in/xmlpath.v2"
 )
 
-type (
-	// NotificationHub is a client for sending messages through Azure Notification Hubs
-	NotificationHub struct {
-		sasKeyValue             string
-		sasKeyName              string
-		hubURL                  *url.URL
-		client                  hubClient
-		expirationTimeGenerator expirationTimeGenerator
+// NotificationHub is a client for sending messages through Azure Notification Hubs
+type NotificationHub struct {
+	sasKeyValue             string
+	sasKeyName              string
+	hubURL                  *url.URL
+	client                  utils.HTTPClient
+	expirationTimeGenerator utils.ExpirationTimeGenerator
 
-		regIDPath *xmlpath.Path
-		eTagPath  *xmlpath.Path
-		expTmPath *xmlpath.Path
-	}
+	regIDPath *xmlpath.Path
+	eTagPath  *xmlpath.Path
+	expTmPath *xmlpath.Path
+}
 
-	hubClient interface {
-		Exec(req *http.Request) ([]byte, error)
-	}
-
-	expirationTimeGenerator interface {
-		GenerateTimestamp() int64
-	}
-
-	expirationTimeGeneratorFunc func() int64
-
-	hubHTTPClient struct {
-		httpClient *http.Client
-	}
-)
+// SetHTTPClient makes it possible to use a custom http client
+func (h *NotificationHub) SetHTTPClient(c utils.HTTPClient) {
+	h.client = c
+}
 
 // Send publishes notification
 func (h *NotificationHub) Send(ctx context.Context, n *Notification, orTags []string) ([]byte, error) {
@@ -81,18 +70,11 @@ func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, orTags 
 
 // Registrations reads all registrations
 func (h *NotificationHub) Registrations(ctx context.Context) (*Registrations, []byte, error) {
-	var (
-		result  = &Registrations{}
-		token   = h.generateSasToken()
-		_url    = h.generateAPIURL("registrations")
-		headers = map[string]string{
-			"Authorization": token,
-		}
-	)
-	rawResponse, err := h.exec(ctx, "GET", _url, headers, nil)
+	rawResponse, err := h.exec(ctx, "GET", h.generateAPIURL("registrations"), Headers{}, nil)
 	if err != nil {
 		return nil, rawResponse, err
 	}
+	result := &Registrations{}
 	if err = xml.Unmarshal(rawResponse, &result); err != nil {
 		return result, rawResponse, err
 	}
@@ -100,16 +82,14 @@ func (h *NotificationHub) Registrations(ctx context.Context) (*Registrations, []
 }
 
 // Register sends registration to the azure hub
-func (h *NotificationHub) Register(r Registration) (RegistrationResult, []byte, error) {
+func (h *NotificationHub) Register(ctx context.Context, r Registration) (RegistrationResult, []byte, error) {
 	var (
 		regRes  = RegistrationResult{}
-		token   = h.generateSasToken()
 		regURL  = h.generateAPIURL("registrations")
 		method  = "POST"
 		payload = ""
 		headers = map[string]string{
-			"Authorization": token,
-			"Content-Type":  "application/atom+xml;type=entry;charset=utf-8",
+			"Content-Type": "application/atom+xml;type=entry;charset=utf-8",
 		}
 	)
 
@@ -128,17 +108,8 @@ func (h *NotificationHub) Register(r Registration) (RegistrationResult, []byte, 
 		regURL.Path = path.Join(regURL.Path, r.RegistrationID)
 	}
 
-	buf := bytes.NewBufferString(payload)
-	req, err := http.NewRequest(method, regURL.String(), buf)
-	if err != nil {
-		return regRes, nil, err
-	}
+	res, err := h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
 
-	for header, val := range headers {
-		req.Header.Set(header, val)
-	}
-
-	res, err := h.client.Exec(req)
 	if err == nil {
 		if err = xml.Unmarshal(res, &regRes); err != nil {
 			return regRes, res, err
@@ -172,13 +143,10 @@ func (h *NotificationHub) Register(r Registration) (RegistrationResult, []byte, 
 // send sends notification to the azure hub
 func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []string, deliverTime *time.Time) ([]byte, error) {
 	var (
-		token   = h.generateSasToken()
-		buf     = bytes.NewBuffer(n.Payload)
 		headers = map[string]string{
-			"Authorization":                 token,
 			"Content-Type":                  n.Format.GetContentType(),
 			"ServiceBusNotification-Format": string(n.Format),
-			"X-Apns-Expiration":             string(generateExpirationTimestamp()), //apns-expiration
+			"X-Apns-Expiration":             string(h.expirationTimeGenerator.GenerateTimestamp()), //apns-expiration
 		}
 		_url = h.generateAPIURL("")
 	)
@@ -194,19 +162,16 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []st
 		_url.Path = path.Join(_url.Path, "messages")
 	}
 
-	return h.exec(ctx, "POST", _url, headers, buf)
+	return h.exec(ctx, "POST", _url, headers, bytes.NewBuffer(n.Payload))
 }
 
 func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, deviceHandle string) ([]byte, error) {
 	var (
-		token   = h.generateSasToken()
-		buf     = bytes.NewBuffer(n.Payload)
-		headers = map[string]string{
-			"Authorization":                       token,
+		headers = Headers{
 			"Content-Type":                        n.Format.GetContentType(),
 			"ServiceBusNotification-Format":       string(n.Format),
 			"ServiceBusNotification-DeviceHandle": deviceHandle,
-			"X-Apns-Expiration":                   string(generateExpirationTimestamp()), //apns-expiration
+			"X-Apns-Expiration":                   string(h.expirationTimeGenerator.GenerateTimestamp()), //apns-expiration
 		}
 		query = h.hubURL.Query()
 	)
@@ -217,7 +182,7 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 		Path:     path.Join(h.hubURL.Path, "messages"),
 		RawQuery: query.Encode(),
 	}
-	return h.exec(ctx, "POST", _url, headers, buf)
+	return h.exec(ctx, "POST", _url, headers, bytes.NewBuffer(n.Payload))
 }
 
 // generateSasToken generates and returns
@@ -249,7 +214,8 @@ func (h *NotificationHub) generateSasToken() string {
 }
 
 // exec request using method to url
-func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL, headers map[string]string, buf io.Reader) ([]byte, error) {
+func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL, headers Headers, buf io.Reader) ([]byte, error) {
+	headers["Authorization"] = h.generateSasToken()
 	req, err := http.NewRequest(method, url.String(), buf)
 	if err != nil {
 		return nil, err
@@ -269,54 +235,4 @@ func (h *NotificationHub) generateAPIURL(endpoint string) *url.URL {
 		Path:     path.Join(h.hubURL.Path, endpoint),
 		RawQuery: h.hubURL.RawQuery,
 	}
-}
-
-// Exec executes notification hub http request and handles the response
-func (hc *hubHTTPClient) Exec(req *http.Request) ([]byte, error) {
-	return handleResponse(hc.httpClient.Do(req))
-}
-
-// GenerateTimestamp calls f()
-func (f expirationTimeGeneratorFunc) GenerateTimestamp() int64 {
-	return f()
-}
-
-// generateExpirationTimestamp generates token expiration timestamp value
-func generateExpirationTimestamp() int64 {
-	return time.Now().Unix() + int64(3600)
-}
-
-// handleResponse reads http response body into byte slice
-// if response contains an unexpected status code, error is returned
-func handleResponse(resp *http.Response, inErr error) (b []byte, err error) {
-	if inErr != nil {
-		return nil, inErr
-	}
-
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil {
-			err = cerr
-		}
-	}()
-
-	b, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	if !isOKResponseCode(resp.StatusCode) {
-		return nil, fmt.Errorf("got unexpected response status code: %d. response: %s", resp.StatusCode, b)
-	}
-
-	if len(b) == 0 {
-		return []byte(fmt.Sprintf("response status: %s", resp.Status)), nil
-	}
-
-	return
-}
-
-// isOKResponseCode identifies whether provided
-// response code matches the expected OK code
-func isOKResponseCode(code int) bool {
-	return code == http.StatusCreated || code == http.StatusOK
 }
