@@ -13,7 +13,7 @@
       <ExpirationTime>9999-12-31T23:59:59.999</ExpirationTime>
       <RegistrationId>8247220326459738692-7748251457295609952-3</RegistrationId>
       <Tags>tag1,tag2,tag3</Tags>
-      <DeviceToken>ABCD</DeviceToken>
+      <DeviceToken>ABCDEFG</DeviceToken>
     </AppleRegistrationDescription>
   </content>
 </entry>

@@ -17,7 +17,7 @@ func TestNotificationFormat_GetContentType(t *testing.T) {
 				expected: "application/json",
 			},
 			{
-				format:   AndroidFormat,
+				format:   GcmFormat,
 				expected: "application/json",
 			},
 			{
@@ -62,7 +62,7 @@ func TestNotificationFormat_IsValid(t *testing.T) {
 				isValid: true,
 			},
 			{
-				format:  AndroidFormat,
+				format:  GcmFormat,
 				isValid: true,
 			},
 			{

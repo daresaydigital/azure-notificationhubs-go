@@ -21,7 +21,7 @@ const (
 	apiVersionValue  = "2015-01" // Looks old but the API is the same
 	directParam      = "direct"
 	defaultScheme    = "https"
-	errfmt           = "Expected %s: %v, got: %v"
+	errfmt           = "Expected %s: \n%v\ngot:\n%v"
 	postMethod       = "POST"
 	putMethod        = "PUT"
 	getMethod        = "GET"

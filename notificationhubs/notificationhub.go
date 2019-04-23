@@ -148,8 +148,8 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 	switch r.NotificationFormat {
 	case AppleFormat:
 		payload = strings.Replace(AppleRegTemplate, "{{DeviceID}}", r.DeviceID, 1)
-	case AndroidFormat:
-		payload = strings.Replace(AndroidRegTemplate, "{{DeviceID}}", r.DeviceID, 1)
+	case GcmFormat:
+		payload = strings.Replace(GcmRegTemplate, "{{DeviceID}}", r.DeviceID, 1)
 	default:
 		return regRes, nil, errors.New("Notification format not implemented")
 	}
@@ -166,28 +166,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 		if err = xml.Unmarshal(res, &regRes); err != nil {
 			return regRes, res, err
 		}
-		rb := bytes.NewReader(res)
-		if root, err := xmlpath.Parse(rb); err == nil {
-			if regID, ok := h.regIDPath.String(root); ok {
-				regRes.RegistrationID = regID
-			} else {
-				return regRes, res, errors.New("RegistrationID not found")
-			}
-			if etag, ok := h.eTagPath.String(root); ok {
-				regRes.ETag = etag
-			} else {
-				return regRes, res, errors.New("ETag not found")
-			}
-			if expTm, ok := h.expTmPath.String(root); ok {
-				if regRes.ExpirationTime, err = time.Parse("2006-01-02T15:04:05.999", expTm); err != nil {
-					return regRes, res, err
-				}
-			} else {
-				return regRes, res, err
-			}
-		} else {
-			return regRes, res, errors.New("ExpirationTime not found")
-		}
+		regRes.RegistrationContent.Normalize()
 	}
 	return regRes, res, err
 }

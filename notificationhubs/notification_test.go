@@ -25,9 +25,9 @@ func TestNewNotification(t *testing.T) {
 				hasErr:               false,
 			},
 			{
-				format:               AndroidFormat,
+				format:               GcmFormat,
 				payload:              testPayload,
-				expectedNotification: &Notification{Format: AndroidFormat, Payload: testPayload},
+				expectedNotification: &Notification{Format: GcmFormat, Payload: testPayload},
 				hasErr:               false,
 			},
 			{

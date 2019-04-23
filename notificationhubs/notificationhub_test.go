@@ -290,26 +290,60 @@ func Test_RegisterApple(t *testing.T) {
 		publishedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:10:11Z")
 		updatedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:10:11Z")
 		expectedResult := RegistrationResult{
-			ID:             "https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01",
-			Title:          "8247220326459738692-7748251457295609952-3",
-			Published:      publishedTime,
-			Updated:        updatedTime,
-			RegistrationID: "8247220326459738692-7748251457295609952-3",
-			ETag:           "1",
-			ExpirationTime: endOfEpoch,
+			ID:        "https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01",
+			Title:     "8247220326459738692-7748251457295609952-3",
+			Published: publishedTime,
+			Updated:   updatedTime,
+			RegistrationContent: RegistrationContent{
+				AppleRegistrationDescription: nil,
+				GcmRegistrationDescription:   nil,
+				RegistratedDevice: &RegistratedDevice{
+					ETag:              "1",
+					ExpirationTime:    "9999-12-31T23:59:59.999",
+					RegistrationID:    "8247220326459738692-7748251457295609952-3",
+					TagsString:        "tag1,tag2,tag3",
+					Tags:              []string{"tag1", "tag2", "tag3"},
+					GcmRegistrationID: "",
+					DeviceToken:       "ABCDEFG",
+					DeviceID:          "ABCDEFG",
+				},
+				Format: AppleFormat,
+			},
 		}
-		if !reflect.DeepEqual(result, expectedResult) {
-			t.Errorf(errfmt, "registration result", expectedResult, result)
+		if expectedResult.ID != result.ID {
+			t.Errorf(errfmt, "", expectedResult.ID, result.ID)
+		}
+		if expectedResult.Title != result.Title {
+			t.Errorf(errfmt, "", expectedResult.Title, result.Title)
+		}
+		if expectedResult.Published != result.Published {
+			t.Errorf(errfmt, "", expectedResult.Published, result.Published)
+		}
+		if expectedResult.Updated != result.Updated {
+			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
+		}
+		if expectedResult.RegistrationContent.AppleRegistrationDescription != result.RegistrationContent.AppleRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.AppleRegistrationDescription, result.RegistrationContent.AppleRegistrationDescription)
+		}
+		if expectedResult.RegistrationContent.GcmRegistrationDescription != result.RegistrationContent.GcmRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.GcmRegistrationDescription, result.RegistrationContent.GcmRegistrationDescription)
+		}
+		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
+			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		}
+		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
 		}
 	}
 }
-func Test_RegisterAndroid(t *testing.T) {
+
+func Test_RegisterGcm(t *testing.T) {
 	var (
 		nhub, mockClient = initTestItems()
 		registration     = Registration{
 			Tags:               "tag1,tag3",
 			DeviceID:           "ANDROIDID",
-			NotificationFormat: AndroidFormat,
+			NotificationFormat: GcmFormat,
 		}
 	)
 
@@ -340,14 +374,96 @@ func Test_RegisterAndroid(t *testing.T) {
 		publishedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:19:06Z")
 		updatedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:19:06Z")
 		expectedResult := RegistrationResult{
-			ID:             "https://testhub-ns.servicebus.windows.net/testhub/registrations/4603854756731398046-26535929789529194-1?api-version=2015-01",
-			Title:          "4603854756731398046-26535929789529194-1",
-			Published:      publishedTime,
-			Updated:        updatedTime,
-			RegistrationID: "4603854756731398046-26535929789529194-1",
-			ETag:           "1",
-			ExpirationTime: endOfEpoch,
+			ID:        "https://testhub-ns.servicebus.windows.net/testhub/registrations/4603854756731398046-26535929789529194-1?api-version=2015-01",
+			Title:     "4603854756731398046-26535929789529194-1",
+			Published: publishedTime,
+			Updated:   updatedTime,
+			RegistrationContent: RegistrationContent{
+				AppleRegistrationDescription: nil,
+				GcmRegistrationDescription:   nil,
+				RegistratedDevice: &RegistratedDevice{
+					ETag:              "1",
+					ExpirationTime:    "9999-12-31T23:59:59.999",
+					RegistrationID:    "4603854756731398046-26535929789529194-1",
+					TagsString:        "tag1,tag3",
+					Tags:              []string{"tag1", "tag3"},
+					DeviceToken:       "",
+					GcmRegistrationID: "ANDROIDID",
+					DeviceID:          "ANDROIDID",
+				},
+				Format: GcmFormat,
+			},
 		}
+		if expectedResult.ID != result.ID {
+			t.Errorf(errfmt, "", expectedResult.ID, result.ID)
+		}
+		if expectedResult.Title != result.Title {
+			t.Errorf(errfmt, "", expectedResult.Title, result.Title)
+		}
+		if expectedResult.Published != result.Published {
+			t.Errorf(errfmt, "", expectedResult.Published, result.Published)
+		}
+		if expectedResult.Updated != result.Updated {
+			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
+		}
+		if expectedResult.RegistrationContent.AppleRegistrationDescription != result.RegistrationContent.AppleRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.AppleRegistrationDescription, result.RegistrationContent.AppleRegistrationDescription)
+		}
+		if expectedResult.RegistrationContent.GcmRegistrationDescription != result.RegistrationContent.GcmRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.GcmRegistrationDescription, result.RegistrationContent.GcmRegistrationDescription)
+		}
+		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
+			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		}
+		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
+		}
+	}
+}
+
+func TRegistrations(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+		gotMethod := req.Method
+		if gotMethod != postMethod {
+			t.Errorf(errfmt, "method", getMethod, gotMethod)
+		}
+		gotURL := req.URL.String()
+		if gotURL != registrationsURL {
+			t.Errorf(errfmt, "URL", registrationsURL, gotURL)
+		}
+		data, e := ioutil.ReadFile("../fixtures/registrationsResult.xml")
+		if e != nil {
+			return nil, e
+		}
+		return data, nil
+	}
+
+	result, data, err := nhub.Registrations(context.Background())
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+	if data == nil {
+		t.Errorf("Registrations response empty")
+	} else {
+		expectedResult := Registrations{
+			Title: "asd",
+		}
+		// publishedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:19:06Z")
+		// updatedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:19:06Z")
+		// expectedResult := RegistrationResult{
+		// 	ID:             "https://testhub-ns.servicebus.windows.net/testhub/registrations/4603854756731398046-26535929789529194-1?api-version=2015-01",
+		// 	Title:          "4603854756731398046-26535929789529194-1",
+		// 	Published:      publishedTime,
+		// 	Updated:        updatedTime,
+		// 	RegistrationID: "4603854756731398046-26535929789529194-1",
+		// 	ETag:           "1",
+		// 	ExpirationTime: endOfEpoch,
+		// }
 		if !reflect.DeepEqual(result, expectedResult) {
 			t.Errorf(errfmt, "registration result", expectedResult, result)
 		}

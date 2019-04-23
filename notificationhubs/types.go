@@ -1,6 +1,9 @@
 package notificationhubs
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // Internal constants
 const (
@@ -20,8 +23,8 @@ const (
 const (
 	// Template notification
 	Template NotificationFormat = "template"
-	// AndroidFormat (ted) notification
-	AndroidFormat NotificationFormat = "gcm"
+	// GcmFormat (ted) notification
+	GcmFormat NotificationFormat = "gcm"
 	// AppleFormat (ted) notification
 	AppleFormat NotificationFormat = "apple"
 	// BaiduFormat (ted) notification
@@ -45,9 +48,9 @@ const (
   </content>
 </entry>`
 
-	// AndroidRegTemplate is the XML string for registering an iOS device
+	// GcmRegTemplate is the XML string for registering an iOS device
 	// Replace {{Tags}} and {{DeviceID}} with the correct values
-	AndroidRegTemplate string = `<?xml version="1.0" encoding="utf-8"?>
+	GcmRegTemplate string = `<?xml version="1.0" encoding="utf-8"?>
 <entry xmlns="http://www.w3.org/2005/Atom">
   <content type="application/xml">
     <GcmRegistrationDescription xmlns:i="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect">
@@ -68,25 +71,61 @@ type (
 		DeviceID           string             `json:"deviceId"`
 		NotificationFormat NotificationFormat `json:"service"`
 		Tags               string             `json:"tags"`
-		ExpirationTime     *time.Time         `json:"expirationTime,omitmepty"`
-	}
-
-	// RegistrationResult is the response from registration
-	RegistrationResult struct {
-		ID             string    `xml:"id"`
-		Title          string    `xml:"title"`
-		Updated        time.Time `xml:"updated"`
-		Published      time.Time `xml:"published"`
-		RegistrationID string
-		ETag           string
-		ExpirationTime time.Time
+		ExpirationTime     time.Time          `json:"expirationTime,omitempty"`
 	}
 
 	// Registrations is a list of RegistrationResults
 	Registrations struct {
-		Feed struct {
-			Title   string               `xml:"title"`
-			Entries []RegistrationResult `xml:"entry"`
-		} `xml:"feed"`
+		Title   string               `xml:"title" json:"title"`
+		ID      string               `xml:"id" json:"id"`
+		Updated time.Time            `xml:"updated" json:"updated"`
+		Entries []RegistrationResult `xml:"entry" json:"entry"`
+	}
+
+	// RegistrationResult is the response from registration
+	RegistrationResult struct {
+		ID                  string              `xml:"id" json:"id"`
+		Title               string              `xml:"title" json:"title"`
+		Updated             time.Time           `xml:"updated" json:"updated"`
+		Published           time.Time           `xml:"published" json:"published"`
+		RegistrationContent RegistrationContent `xml:"content" json:"content"`
+	}
+
+	// RegistrationContent is information about a specific device registration
+	RegistrationContent struct {
+		GcmRegistrationDescription   *RegistratedDevice `xml:"GcmRegistrationDescription,omitempty" json:"-"`
+		AppleRegistrationDescription *RegistratedDevice `xml:"AppleRegistrationDescription,omitempty" json:"-"`
+		RegistratedDevice            *RegistratedDevice `xml:"-" json:"registratedDevice"`
+		Format                       NotificationFormat `xml:"-" json:"format"`
+	}
+
+	// RegistratedDevice is a device registration to the hub
+	RegistratedDevice struct {
+		ExpirationTime    string   `xml:"ExpirationTime" json:"expirationTime,omitempty"`
+		RegistrationID    string   `xml:"RegistrationId" json:"registrationID"`
+		ETag              string   `xml:"ETag" json:"eTag"`
+		DeviceToken       string   `xml:"DeviceToken" json:"-"`
+		GcmRegistrationID string   `xml:"GcmRegistrationId" json:"-"`
+		TagsString        string   `xml:"Tags" json:"-"`
+		DeviceID          string   `xml:"-" json:"deviceId"`
+		Tags              []string `xml:"-" json:"tags"`
 	}
 )
+
+// Normalize normalizes the different devices
+func (r *RegistrationContent) Normalize() {
+	if r.AppleRegistrationDescription != nil {
+		r.Format = AppleFormat
+		r.RegistratedDevice = r.AppleRegistrationDescription
+		r.AppleRegistrationDescription = nil
+		r.RegistratedDevice.DeviceID = r.RegistratedDevice.DeviceToken
+	} else if r.GcmRegistrationDescription != nil {
+		r.Format = GcmFormat
+		r.RegistratedDevice = r.GcmRegistrationDescription
+		r.GcmRegistrationDescription = nil
+		r.RegistratedDevice.DeviceID = r.RegistratedDevice.GcmRegistrationID
+	}
+	if r.RegistratedDevice != nil {
+		r.RegistratedDevice.Tags = strings.Split(r.RegistratedDevice.TagsString, ",")
+	}
+}
