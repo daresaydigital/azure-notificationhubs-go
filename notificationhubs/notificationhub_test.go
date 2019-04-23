@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -61,7 +62,7 @@ func Test_NewNotificationHub(t *testing.T) {
 }
 
 func Test_NotificationHubendFanout(t *testing.T) {
-	nhub, notification, mockClient := initTestItems()
+	nhub, notification, mockClient := initNotificationTestItems()
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
 		gotURL := obtainedReq.URL.String()
@@ -141,7 +142,7 @@ func Test_NotificationHubendFanout(t *testing.T) {
 func Test_NotificationHubendCategories(t *testing.T) {
 	var (
 		orTags                         = []string{"tag1", "tag2"}
-		nhub, notification, mockClient = initTestItems()
+		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
@@ -171,7 +172,7 @@ func Test_NotificationHubendCategories(t *testing.T) {
 func Test_NotificationSendError(t *testing.T) {
 	var (
 		expectedError                  = errors.New("test error")
-		nhub, notification, mockClient = initTestItems()
+		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
@@ -191,7 +192,7 @@ func Test_NotificationSendError(t *testing.T) {
 }
 
 func Test_NotificationScheduleSuccess(t *testing.T) {
-	nhub, notification, mockClient := initTestItems()
+	nhub, notification, mockClient := initNotificationTestItems()
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
 		gotURL := obtainedReq.URL.String()
@@ -215,7 +216,7 @@ func Test_NotificationScheduleSuccess(t *testing.T) {
 func Test_NotificationScheduleOutdated(t *testing.T) {
 	var (
 		expectedError         = errors.New("You can not schedule a notification in the past")
-		nhub, notification, _ = initTestItems()
+		nhub, notification, _ = initNotificationTestItems()
 	)
 	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
 	if b != nil {
@@ -230,7 +231,7 @@ func Test_NotificationScheduleOutdated(t *testing.T) {
 func Test_NotificationScheduleError(t *testing.T) {
 	var (
 		expectedError                  = errors.New("test schedule error")
-		nhub, notification, mockClient = initTestItems()
+		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
 	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
@@ -249,5 +250,106 @@ func Test_NotificationScheduleError(t *testing.T) {
 
 	if !strings.Contains(obtainedErr.Error(), expectedError.Error()) {
 		t.Errorf(errfmt, "Send error", expectedError, obtainedErr)
+	}
+}
+
+func Test_RegisterApple(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		registration     = Registration{
+			Tags:               "tag1,tag2,tag3",
+			DeviceID:           "ABCDEFG",
+			NotificationFormat: AppleFormat,
+		}
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+		gotMethod := req.Method
+		if gotMethod != postMethod {
+			t.Errorf(errfmt, "method", postMethod, gotMethod)
+		}
+		gotURL := req.URL.String()
+		if gotURL != registrationsURL {
+			t.Errorf(errfmt, "URL", registrationsURL, gotURL)
+		}
+		data, e := ioutil.ReadFile("../fixtures/appleRegistrationResult.xml")
+		if e != nil {
+			return nil, e
+		}
+		return data, nil
+	}
+
+	result, data, err := nhub.Register(context.Background(), registration)
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+	if data == nil {
+		t.Errorf("Register response empty")
+	} else {
+		publishedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:10:11Z")
+		updatedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:10:11Z")
+		expectedResult := RegistrationResult{
+			ID:             "https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01",
+			Title:          "8247220326459738692-7748251457295609952-3",
+			Published:      publishedTime,
+			Updated:        updatedTime,
+			RegistrationID: "8247220326459738692-7748251457295609952-3",
+			ETag:           "1",
+			ExpirationTime: endOfEpoch,
+		}
+		if !reflect.DeepEqual(result, expectedResult) {
+			t.Errorf(errfmt, "registration result", expectedResult, result)
+		}
+	}
+}
+func Test_RegisterAndroid(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		registration     = Registration{
+			Tags:               "tag1,tag3",
+			DeviceID:           "ANDROIDID",
+			NotificationFormat: AndroidFormat,
+		}
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+		gotMethod := req.Method
+		if gotMethod != postMethod {
+			t.Errorf(errfmt, "method", postMethod, gotMethod)
+		}
+		gotURL := req.URL.String()
+		if gotURL != registrationsURL {
+			t.Errorf(errfmt, "URL", registrationsURL, gotURL)
+		}
+		data, e := ioutil.ReadFile("../fixtures/androidRegistrationResult.xml")
+		if e != nil {
+			return nil, e
+		}
+		return data, nil
+	}
+
+	result, data, err := nhub.Register(context.Background(), registration)
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+	if data == nil {
+		t.Errorf("Register response empty")
+	} else {
+		publishedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:19:06Z")
+		updatedTime, _ := time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:19:06Z")
+		expectedResult := RegistrationResult{
+			ID:             "https://testhub-ns.servicebus.windows.net/testhub/registrations/4603854756731398046-26535929789529194-1?api-version=2015-01",
+			Title:          "4603854756731398046-26535929789529194-1",
+			Published:      publishedTime,
+			Updated:        updatedTime,
+			RegistrationID: "4603854756731398046-26535929789529194-1",
+			ETag:           "1",
+			ExpirationTime: endOfEpoch,
+		}
+		if !reflect.DeepEqual(result, expectedResult) {
+			t.Errorf(errfmt, "registration result", expectedResult, result)
+		}
 	}
 }

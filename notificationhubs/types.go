@@ -64,31 +64,21 @@ type (
 
 	// Registration is a device registration to the hub
 	Registration struct {
-		// RegistrationID id of the registration
-		RegistrationID string `json:"registrationId"`
-		// DeviceID id of the device
-		DeviceID string `json:"deviceId"`
-		// NotificationFormat of which type of notification that should be received
+		RegistrationID     string             `json:"registrationId"`
+		DeviceID           string             `json:"deviceId"`
 		NotificationFormat NotificationFormat `json:"service"`
-		// Tags for the device
-		Tags string `json:"tags"`
-		// ExpirationTime
-		ExpirationTime *time.Time `json:"expirationTime,omitmepty"`
+		Tags               string             `json:"tags"`
+		ExpirationTime     *time.Time         `json:"expirationTime,omitmepty"`
 	}
 
 	// RegistrationResult is the response from registration
 	RegistrationResult struct {
-		// ID
-		ID string `xml:"id"`
-		// Title
-		Title string `xml:"title"`
-		// Updated
-		Updated time.Time `xml:"updated"`
-		// RegistrationID
+		ID             string    `xml:"id"`
+		Title          string    `xml:"title"`
+		Updated        time.Time `xml:"updated"`
+		Published      time.Time `xml:"published"`
 		RegistrationID string
-		// ETag
-		ETag string
-		// ExpirationTime
+		ETag           string
 		ExpirationTime time.Time
 	}
 

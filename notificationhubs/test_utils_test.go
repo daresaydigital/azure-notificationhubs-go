@@ -3,6 +3,7 @@ package notificationhubs_test
 import (
 	"net/http"
 	"net/url"
+	"time"
 
 	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
 	"github.com/daresaydigital/azure-notificationhubs-go/notificationhubs/utils"
@@ -21,9 +22,13 @@ const (
 	directParam      = "direct"
 	defaultScheme    = "https"
 	errfmt           = "Expected %s: %v, got: %v"
+	postMethod       = "POST"
+	putMethod        = "PUT"
+	getMethod        = "GET"
 )
 
 var (
+	endOfEpoch, _         = time.Parse("2006-01-02T15:04:05.000", "9999-12-31T23:59:59.999")
 	mockTimeGeneratorFunc = utils.ExpirationTimeGeneratorFunc(func() int64 { return 123 })
 	realTimeGeneratorFunc = utils.NewExpirationTimeGenerator()
 	sasURIString          = (&url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: defaultScheme}).String()
@@ -49,13 +54,20 @@ func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, error) {
 	return mc.execFunc(req)
 }
 
-func initTestItems() (*NotificationHub, *Notification, *mockHubHTTPClient) {
+func initNotificationTestItems() (*NotificationHub, *Notification, *mockHubHTTPClient) {
 	var (
-		notification, _ = NewNotification(Template, []byte("test payload"))
-		mockClient      = &mockHubHTTPClient{}
-		nhub            = NewNotificationHub(connectionString, hubPath)
+		notification, _  = NewNotification(Template, []byte("test payload"))
+		nhub, mockClient = initTestItems()
+	)
+	return nhub, notification, mockClient
+}
+
+func initTestItems() (*NotificationHub, *mockHubHTTPClient) {
+	var (
+		mockClient = &mockHubHTTPClient{}
+		nhub       = NewNotificationHub(connectionString, hubPath)
 	)
 	nhub.SetHTTPClient(mockClient)
 	nhub.SetExpirationTimeGenerator(mockTimeGeneratorFunc)
-	return nhub, notification, mockClient
+	return nhub, mockClient
 }

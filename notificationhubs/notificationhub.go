@@ -33,7 +33,7 @@ type NotificationHub struct {
 	expTmPath               *xmlpath.Path
 }
 
-// NewNotificationHub initializes and returns NotificationHub pointer
+// NewNotificationHub initializes and retubrns NotificationHub pointer
 func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 	var (
 		connData    = strings.Split(connectionString, ";")

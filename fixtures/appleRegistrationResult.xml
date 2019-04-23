@@ -1,0 +1,19 @@
+<entry a:etag="W/&quot;1&quot;"
+  xmlns="http://www.w3.org/2005/Atom"
+  xmlns:a="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
+  <id>https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01</id>
+  <title type="text">8247220326459738692-7748251457295609952-3</title>
+  <published>2019-04-20T09:10:11Z</published>
+  <updated>2019-04-23T09:10:11Z</updated>
+  <link rel="self" href="https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01"/>
+  <content type="application/xml">
+    <AppleRegistrationDescription xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect"
+      xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+      <ETag>1</ETag>
+      <ExpirationTime>9999-12-31T23:59:59.999</ExpirationTime>
+      <RegistrationId>8247220326459738692-7748251457295609952-3</RegistrationId>
+      <Tags>tag1,tag2,tag3</Tags>
+      <DeviceToken>ABCD</DeviceToken>
+    </AppleRegistrationDescription>
+  </content>
+</entry>
