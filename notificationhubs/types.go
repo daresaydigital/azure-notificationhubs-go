@@ -17,6 +17,11 @@ const (
 	paramEndpoint     = "Endpoint="
 	paramSaasKeyName  = "SharedAccessKeyName="
 	paramSaasKeyValue = "SharedAccessKey="
+
+	// Http methods
+	postMethod = "POST"
+	getMethod  = "GET"
+	putMethod  = "PUT"
 )
 
 // Public constants
@@ -67,65 +72,84 @@ type (
 
 	// Registration is a device registration to the hub
 	Registration struct {
-		RegistrationID     string             `json:"registrationId"`
-		DeviceID           string             `json:"deviceId"`
-		NotificationFormat NotificationFormat `json:"service"`
-		Tags               string             `json:"tags"`
+		DeviceID           string             `json:"deviceId,omitempty"`
 		ExpirationTime     time.Time          `json:"expirationTime,omitempty"`
+		NotificationFormat NotificationFormat `json:"service,omitempty"`
+		RegistrationID     string             `json:"registrationID,omitempty"`
+		Tags               string             `json:"tags,omitempty"`
 	}
 
 	// Registrations is a list of RegistrationResults
 	Registrations struct {
-		Title   string               `xml:"title" json:"title"`
-		ID      string               `xml:"id" json:"id"`
-		Updated time.Time            `xml:"updated" json:"updated"`
-		Entries []RegistrationResult `xml:"entry" json:"entry"`
+		ID      string               `xml:"id"      json:"id,omitempty"`
+		Title   string               `xml:"title"   json:"title,omitempty"`
+		Updated time.Time            `xml:"updated" json:"updated,omitempty"`
+		Entries []RegistrationResult `xml:"entry"   json:"entries,omitempty"`
 	}
 
 	// RegistrationResult is the response from registration
 	RegistrationResult struct {
-		ID                  string              `xml:"id" json:"id"`
-		Title               string              `xml:"title" json:"title"`
-		Updated             time.Time           `xml:"updated" json:"updated"`
-		Published           time.Time           `xml:"published" json:"published"`
-		RegistrationContent RegistrationContent `xml:"content" json:"content"`
+		ID                  string               `xml:"id"        json:"id,omitempty"`
+		Published           time.Time            `xml:"published" json:"published,omitempty"`
+		RegistrationContent *RegistrationContent `xml:"content"   json:"content,omitempty"`
+		Title               string               `xml:"title"     json:"title,omitempty"`
+		Updated             time.Time            `xml:"updated"   json:"updated,omitempty"`
 	}
 
 	// RegistrationContent is information about a specific device registration
 	RegistrationContent struct {
-		GcmRegistrationDescription   *RegistratedDevice `xml:"GcmRegistrationDescription,omitempty" json:"-"`
-		AppleRegistrationDescription *RegistratedDevice `xml:"AppleRegistrationDescription,omitempty" json:"-"`
-		RegistratedDevice            *RegistratedDevice `xml:"-" json:"registratedDevice"`
-		Format                       NotificationFormat `xml:"-" json:"format"`
+		AppleRegistrationDescription *RegistratedDevice `xml:"AppleRegistrationDescription" json:"-"`
+		Format                       NotificationFormat `xml:"-"                            json:"format,omitempty"`
+		GcmRegistrationDescription   *RegistratedDevice `xml:"GcmRegistrationDescription"   json:"-"`
+		RegistratedDevice            *RegistratedDevice `xml:"-"                            json:"registratedDevice,omitempty"`
 	}
 
 	// RegistratedDevice is a device registration to the hub
 	RegistratedDevice struct {
-		ExpirationTime    string   `xml:"ExpirationTime" json:"expirationTime,omitempty"`
-		RegistrationID    string   `xml:"RegistrationId" json:"registrationID"`
-		ETag              string   `xml:"ETag" json:"eTag"`
-		DeviceToken       string   `xml:"DeviceToken" json:"-"`
-		GcmRegistrationID string   `xml:"GcmRegistrationId" json:"-"`
-		TagsString        string   `xml:"Tags" json:"-"`
-		DeviceID          string   `xml:"-" json:"deviceId"`
-		Tags              []string `xml:"-" json:"tags"`
+		DeviceID             string    `xml:"-"                 json:"deviceID,omitempty"`
+		DeviceToken          *string   `xml:"DeviceToken"       json:"-"`
+		ETag                 string    `xml:"ETag"              json:"eTag,omitempty"`
+		ExpirationTimeString *string   `xml:"ExpirationTime"    json:"-"`
+		ExpirationTime       time.Time `xml:"-"                 json:"expirationTime,omitempty"`
+		GcmRegistrationID    *string   `xml:"GcmRegistrationId" json:"-"`
+		RegistrationID       string    `xml:"RegistrationId"    json:"registrationID,omitempty"`
+		Tags                 []string  `xml:"-"                 json:"tags,omitempty"`
+		TagsString           *string   `xml:"Tags"              json:"-"`
 	}
 )
 
+// Normalize normalizes all devices in the feed
+func (r *Registrations) normalize() {
+	for _, entry := range r.Entries {
+		if entry.RegistrationContent != nil {
+			entry.RegistrationContent.normalize()
+		}
+	}
+}
+
 // Normalize normalizes the different devices
-func (r *RegistrationContent) Normalize() {
+func (r *RegistrationContent) normalize() {
 	if r.AppleRegistrationDescription != nil {
 		r.Format = AppleFormat
 		r.RegistratedDevice = r.AppleRegistrationDescription
 		r.AppleRegistrationDescription = nil
-		r.RegistratedDevice.DeviceID = r.RegistratedDevice.DeviceToken
+		r.RegistratedDevice.DeviceID = *r.RegistratedDevice.DeviceToken
+		r.RegistratedDevice.DeviceToken = nil
 	} else if r.GcmRegistrationDescription != nil {
 		r.Format = GcmFormat
 		r.RegistratedDevice = r.GcmRegistrationDescription
 		r.GcmRegistrationDescription = nil
-		r.RegistratedDevice.DeviceID = r.RegistratedDevice.GcmRegistrationID
+		r.RegistratedDevice.DeviceID = *r.RegistratedDevice.GcmRegistrationID
+		r.RegistratedDevice.GcmRegistrationID = nil
 	}
+	expirationTime, err := time.Parse("2006-01-02T15:04:05.000Z", *r.RegistratedDevice.ExpirationTimeString)
+	if err != nil { // The API uses more than one date format unfortunately :(
+		expirationTime, _ = time.Parse("2006-01-02T15:04:05.000", *r.RegistratedDevice.ExpirationTimeString)
+	}
+	r.RegistratedDevice.ExpirationTime = expirationTime
+	r.RegistratedDevice.ExpirationTimeString = nil
 	if r.RegistratedDevice != nil {
-		r.RegistratedDevice.Tags = strings.Split(r.RegistratedDevice.TagsString, ",")
+		r.RegistratedDevice.Tags = strings.Split(*r.RegistratedDevice.TagsString, ",")
+		r.RegistratedDevice.TagsString = nil
 	}
 }

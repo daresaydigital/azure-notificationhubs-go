@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	endOfEpoch, _         = time.Parse("2006-01-02T15:04:05.000", "9999-12-31T23:59:59.999")
+	endOfEpoch, _         = time.Parse("2006-01-02T15:04:05.000Z", "9999-12-31T23:59:59.999Z")
 	mockTimeGeneratorFunc = utils.ExpirationTimeGeneratorFunc(func() int64 { return 123 })
 	realTimeGeneratorFunc = utils.NewExpirationTimeGenerator()
 	sasURIString          = (&url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: defaultScheme}).String()

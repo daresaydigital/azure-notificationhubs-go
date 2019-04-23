@@ -120,16 +120,35 @@ func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, orTags 
 	return b, nil
 }
 
+// Registration reads one specific registration
+func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*RegistrationResult, []byte, error) {
+	var (
+		result = &RegistrationResult{}
+		regURL = h.generateAPIURL("registrations")
+	)
+	regURL.Path = path.Join(regURL.Path, deviceID)
+	rawResponse, err := h.exec(ctx, getMethod, regURL, Headers{}, nil)
+	if err != nil {
+		return nil, rawResponse, err
+	}
+	if err = xml.Unmarshal(rawResponse, &result); err != nil {
+		return nil, rawResponse, err
+	}
+	result.RegistrationContent.normalize()
+	return result, rawResponse, nil
+}
+
 // Registrations reads all registrations
 func (h *NotificationHub) Registrations(ctx context.Context) (*Registrations, []byte, error) {
-	rawResponse, err := h.exec(ctx, "GET", h.generateAPIURL("registrations"), Headers{}, nil)
+	rawResponse, err := h.exec(ctx, getMethod, h.generateAPIURL("registrations"), Headers{}, nil)
 	if err != nil {
 		return nil, rawResponse, err
 	}
 	result := &Registrations{}
 	if err = xml.Unmarshal(rawResponse, &result); err != nil {
-		return result, rawResponse, err
+		return nil, rawResponse, err
 	}
+	result.normalize()
 	return result, rawResponse, nil
 }
 
@@ -138,7 +157,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 	var (
 		regRes  = RegistrationResult{}
 		regURL  = h.generateAPIURL("registrations")
-		method  = "POST"
+		method  = postMethod
 		payload = ""
 		headers = map[string]string{
 			"Content-Type": "application/atom+xml;type=entry;charset=utf-8",
@@ -156,7 +175,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 	payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
 
 	if r.RegistrationID != "" {
-		method = "PUT"
+		method = putMethod
 		regURL.Path = path.Join(regURL.Path, r.RegistrationID)
 	}
 
@@ -166,7 +185,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 		if err = xml.Unmarshal(res, &regRes); err != nil {
 			return regRes, res, err
 		}
-		regRes.RegistrationContent.Normalize()
+		regRes.RegistrationContent.normalize()
 	}
 	return regRes, res, err
 }
@@ -197,7 +216,7 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []st
 		_url.Path = path.Join(_url.Path, "messages")
 	}
 
-	return h.exec(ctx, "POST", _url, headers, bytes.NewBuffer(n.Payload))
+	return h.exec(ctx, postMethod, _url, headers, bytes.NewBuffer(n.Payload))
 }
 
 func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, deviceHandle string) ([]byte, error) {
@@ -217,7 +236,7 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 		Path:     path.Join(h.HubURL.Path, "messages"),
 		RawQuery: query.Encode(),
 	}
-	return h.exec(ctx, "POST", _url, headers, bytes.NewBuffer(n.Payload))
+	return h.exec(ctx, postMethod, _url, headers, bytes.NewBuffer(n.Payload))
 }
 
 // generateSasToken generates and returns
