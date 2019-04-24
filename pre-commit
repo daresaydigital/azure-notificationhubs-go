@@ -43,12 +43,12 @@ please run 'golint ./...' on your changes before committing."
 }
 
 run_govet() {
-  GOVET_ERRORS=$(go tool vet ./*.go 2>&1)
+  GOVET_ERRORS=$(go vet ./... 2>&1)
   if [ -n "$GOVET_ERRORS" ]
   then
     log_error "go vet failed for the following reasons:
 $GOVET_ERRORS
-please run 'go tool vet ./*.go' on your changes before committing."
+please run 'go vet ./...' on your changes before committing."
     exit 1
   fi
 }
@@ -56,8 +56,8 @@ please run 'go tool vet ./*.go' on your changes before committing."
 run_unit_tests() {
   if [ -z "$NOTEST" ]
   then
-    log_error 'Running short tests...'
-    env AMQP_URL= go test -short
+    log_error 'Running tests...'
+    go test ./...
   fi
 }
 
