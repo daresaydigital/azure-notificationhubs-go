@@ -112,14 +112,13 @@ func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, tags *s
 	if err != nil {
 		return nil, fmt.Errorf("notificationHub.Schedule: %s", err)
 	}
-
 	return b, nil
 }
 
 // Registration reads one specific registration
 func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*RegistrationResult, []byte, error) {
 	var (
-		result = &RegistrationResult{}
+		res    = &RegistrationResult{}
 		regURL = h.generateAPIURL("registrations")
 	)
 	regURL.Path = path.Join(regURL.Path, deviceID)
@@ -127,11 +126,11 @@ func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*R
 	if err != nil {
 		return nil, rawResponse, err
 	}
-	if err = xml.Unmarshal(rawResponse, &result); err != nil {
+	if err = xml.Unmarshal(rawResponse, &res); err != nil {
 		return nil, rawResponse, err
 	}
-	result.RegistrationContent.normalize()
-	return result, rawResponse, nil
+	res.RegistrationContent.normalize()
+	return res, rawResponse, nil
 }
 
 // Registrations reads all registrations
@@ -140,12 +139,12 @@ func (h *NotificationHub) Registrations(ctx context.Context) (*Registrations, []
 	if err != nil {
 		return nil, rawResponse, err
 	}
-	result := &Registrations{}
-	if err = xml.Unmarshal(rawResponse, &result); err != nil {
+	res := &Registrations{}
+	if err = xml.Unmarshal(rawResponse, &res); err != nil {
 		return nil, rawResponse, err
 	}
-	result.normalize()
-	return result, rawResponse, nil
+	res.normalize()
+	return res, rawResponse, nil
 }
 
 // Register sends registration to the azure hub
