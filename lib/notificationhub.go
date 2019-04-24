@@ -90,13 +90,15 @@ func (h *NotificationHub) SetExpirationTimeGenerator(e utils.ExpirationTimeGener
 	h.expirationTimeGenerator = e
 }
 
-// Send publishes notification
-func (h *NotificationHub) Send(ctx context.Context, n *Notification, orTags []string) ([]byte, error) {
-	b, err := h.send(ctx, n, orTags, nil)
+// Send publishes notification directly
+// Format tags according to https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-tags-segment-push-message
+// ex. "(follows_RedSox || follows_Cardinals) && location_Boston"
+// or nil if no tags should be used
+func (h *NotificationHub) Send(ctx context.Context, n *Notification, tags *string) ([]byte, error) {
+	b, err := h.send(ctx, n, tags, nil)
 	if err != nil {
 		return nil, fmt.Errorf("notificationHub.Send: %s", err)
 	}
-
 	return b, nil
 }
 
@@ -106,13 +108,14 @@ func (h *NotificationHub) SendDirect(ctx context.Context, n *Notification, devic
 	if err != nil {
 		return nil, fmt.Errorf("notificationHub.SendDirect: %s", err)
 	}
-
 	return b, nil
 }
 
 // Schedule pusblishes a scheduled notification
-func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, orTags []string, deliverTime time.Time) ([]byte, error) {
-	b, err := h.send(ctx, n, orTags, &deliverTime)
+// Format tags according to https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-tags-segment-push-message
+// or nil if no tags should be used
+func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, tags *string, deliverTime time.Time) ([]byte, error) {
+	b, err := h.send(ctx, n, tags, &deliverTime)
 	if err != nil {
 		return nil, fmt.Errorf("notificationHub.Schedule: %s", err)
 	}
@@ -191,7 +194,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 }
 
 // send sends notification to the azure hub
-func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []string, deliverTime *time.Time) ([]byte, error) {
+func (h *NotificationHub) send(ctx context.Context, n *Notification, tags *string, deliverTime *time.Time) ([]byte, error) {
 	var (
 		headers = map[string]string{
 			"Content-Type":                  n.Format.GetContentType(),
@@ -201,8 +204,8 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, orTags []st
 		_url = h.generateAPIURL("")
 	)
 
-	if len(orTags) > 0 {
-		headers["ServiceBusNotification-Tags"] = strings.Join(orTags, " || ")
+	if tags != nil && len(*tags) > 0 {
+		headers["ServiceBusNotification-Tags"] = *tags
 	}
 
 	if deliverTime != nil {

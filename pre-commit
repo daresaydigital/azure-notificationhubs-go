@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LATEST_STABLE_SUPPORTED_GO_VERSION="1.11"
+LATEST_STABLE_SUPPORTED_GO_VERSION="1.12"
 
 main() {
   if local_go_version_is_latest_stable
@@ -20,7 +20,12 @@ log_error() {
   echo "$*" 1>&2
 }
 
+log_info() {
+  echo "$*" 1>&1
+}
+
 run_gofmt() {
+  log_info 'Running format...'
   GOFMT_FILES=$(gofmt -l .)
   if [ -n "$GOFMT_FILES" ]
   then
@@ -32,6 +37,7 @@ please run 'gofmt -w .' on your changes before committing."
 }
 
 run_golint() {
+  log_info 'Running lint...'
   GOLINT_ERRORS=$(golint ./... | grep -v "Id should be")
   if [ -n "$GOLINT_ERRORS" ]
   then
@@ -43,6 +49,7 @@ please run 'golint ./...' on your changes before committing."
 }
 
 run_govet() {
+  log_info 'Running vet...'
   GOVET_ERRORS=$(go vet ./... 2>&1)
   if [ -n "$GOVET_ERRORS" ]
   then
@@ -56,7 +63,7 @@ please run 'go vet ./...' on your changes before committing."
 run_unit_tests() {
   if [ -z "$NOTEST" ]
   then
-    log_error 'Running tests...'
+    log_info 'Running tests...'
     go test ./...
   fi
 }

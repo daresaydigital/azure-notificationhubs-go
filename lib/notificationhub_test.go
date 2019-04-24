@@ -65,28 +65,26 @@ func Test_NotificationHubendFanout(t *testing.T) {
 	nhub, notification, mockClient := initNotificationTestItems()
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		gotURL := obtainedReq.URL.String()
+		var (
+			gotURL     = obtainedReq.URL.String()
+			gotBody, _ = ioutil.ReadAll(obtainedReq.Body)
+		)
+
 		if gotURL != messagesURL {
 			t.Errorf(errfmt, "request URL", messagesURL, gotURL)
 		}
-
 		if obtainedReq.Method != "POST" {
 			t.Errorf(errfmt, "request Method", "POST", obtainedReq.Method)
 		}
-
-		b, _ := ioutil.ReadAll(obtainedReq.Body)
-		if string(b) != string(notification.Payload) {
-			t.Errorf(errfmt, "request Body", string(notification.Payload), b)
+		if string(gotBody) != string(notification.Payload) {
+			t.Errorf(errfmt, "request Body", string(notification.Payload), gotBody)
 		}
-
 		if obtainedReq.Header.Get("Content-Type") != notification.Format.GetContentType() {
 			t.Errorf(errfmt, "Content-Type header", notification.Format.GetContentType(), obtainedReq.Header.Get("Content-Type"))
 		}
-
 		if obtainedReq.Header.Get("ServiceBusNotification-Format") != string(notification.Format) {
 			t.Errorf(errfmt, "ServiceBusNotification-Format header", notification.Format, obtainedReq.Header.Get("ServiceBusNotification-Format"))
 		}
-
 		if obtainedReq.Header.Get("ServiceBusNotification-Tags") != "" {
 			t.Errorf(errfmt, "ServiceBusNotification-Tags", "", obtainedReq.Header.Get("ServiceBusNotification-Tags"))
 		}
@@ -141,12 +139,12 @@ func Test_NotificationHubendFanout(t *testing.T) {
 
 func Test_NotificationHubendCategories(t *testing.T) {
 	var (
-		orTags                         = []string{"tag1", "tag2"}
+		orTags                         = "tag1 || tag2"
 		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
 	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
-		expectedTags := strings.Join(orTags, " || ")
+		expectedTags := "tag1 || tag2"
 		if obtainedReq.Header.Get("ServiceBusNotification-Tags") != expectedTags {
 			t.Errorf(errfmt, "ServiceBusNotification-Tags", expectedTags, obtainedReq.Header.Get("ServiceBusNotification-Tags"))
 		}
@@ -159,7 +157,7 @@ func Test_NotificationHubendCategories(t *testing.T) {
 		return nil, nil
 	}
 
-	b, err := nhub.Send(context.Background(), notification, orTags)
+	b, err := nhub.Send(context.Background(), notification, &orTags)
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
