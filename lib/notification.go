@@ -1,4 +1,4 @@
-package notificationhubs
+package lib
 
 import "fmt"
 
@@ -9,6 +9,15 @@ type (
 		Payload []byte
 	}
 )
+
+// NewNotification initializes and returns a Notification pointer
+func NewNotification(format NotificationFormat, payload []byte) (*Notification, error) {
+	if !format.IsValid() {
+		return nil, fmt.Errorf("unknown format '%s'", format)
+	}
+
+	return &Notification{format, payload}, nil
+}
 
 // String returns Notification string representation
 func (n *Notification) String() string {

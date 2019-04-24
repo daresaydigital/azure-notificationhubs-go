@@ -1,4 +1,4 @@
-package notificationhubs
+package lib
 
 // NotificationFormat is the format of a notification
 type NotificationFormat string
@@ -9,7 +9,7 @@ func (f NotificationFormat) GetContentType() string {
 	switch f {
 	case Template,
 		AppleFormat,
-		AndroidFormat,
+		GcmFormat,
 		KindleFormat,
 		BaiduFormat:
 		return "application/json"
@@ -21,7 +21,7 @@ func (f NotificationFormat) GetContentType() string {
 // IsValid identifies whether notification format is valid
 func (f NotificationFormat) IsValid() bool {
 	return f == Template ||
-		f == AndroidFormat ||
+		f == GcmFormat ||
 		f == AppleFormat ||
 		f == BaiduFormat ||
 		f == KindleFormat ||

@@ -1,0 +1,17 @@
+language: go
+
+go:
+  - 1.10.x
+  - 1.11.x
+  - 1.12.x
+
+env:
+  - GO111MODULE=on
+
+before_install:
+  - go get ./...
+  - go get -v golang.org/x/lint/golint
+
+script:
+  - ./pre-commit
+  - go test -vet -v -cover -race ./...
