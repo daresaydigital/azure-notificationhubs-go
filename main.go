@@ -1,17 +1,17 @@
-package azurenotificationhubs
+package notificationhubs
 
 import (
-	nh "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
+	"github.com/daresaydigital/azure-notificationhubs-go/lib"
 )
 
 // NewNotificationHub initializes and returns NotificationHub pointer
-func NewNotificationHub(connectionString, hubPath string) *nh.NotificationHub {
-	return nh.NewNotificationHub(connectionString, hubPath)
+func NewNotificationHub(connectionString, hubPath string) *lib.NotificationHub {
+	return lib.NewNotificationHub(connectionString, hubPath)
 }
 
 // NewNotification initalizes and returns Notification pointer
-func NewNotification(format nh.NotificationFormat, payload []byte) *nh.Notification {
-	notification, err := nh.NewNotification(format, payload)
+func NewNotification(format lib.NotificationFormat, payload []byte) *lib.Notification {
+	notification, err := lib.NewNotification(format, payload)
 	if err != nil {
 		return nil
 	}

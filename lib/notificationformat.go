@@ -1,4 +1,4 @@
-package notificationhubs
+package lib
 
 // NotificationFormat is the format of a notification
 type NotificationFormat string

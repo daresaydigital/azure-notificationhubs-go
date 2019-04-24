@@ -1,4 +1,4 @@
-package notificationhubs
+package lib
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/daresaydigital/azure-notificationhubs-go/notificationhubs/utils"
+	"github.com/daresaydigital/azure-notificationhubs-go/lib/utils"
 	"gopkg.in/xmlpath.v2"
 )
 

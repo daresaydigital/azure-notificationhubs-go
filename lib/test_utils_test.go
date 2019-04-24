@@ -1,12 +1,12 @@
-package notificationhubs_test
+package lib_test
 
 import (
 	"net/http"
 	"net/url"
 	"time"
 
-	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
-	"github.com/daresaydigital/azure-notificationhubs-go/notificationhubs/utils"
+	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
+	"github.com/daresaydigital/azure-notificationhubs-go/lib/utils"
 	"gopkg.in/xmlpath.v2"
 )
 

@@ -1,4 +1,4 @@
-package notificationhubs
+package lib
 
 import (
 	"strings"

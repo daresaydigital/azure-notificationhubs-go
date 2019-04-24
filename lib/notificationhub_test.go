@@ -1,4 +1,4 @@
-package notificationhubs_test
+package lib_test
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/daresaydigital/azure-notificationhubs-go/notificationhubs"
+	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
 )
 
 func Test_NewNotificationHub(t *testing.T) {
