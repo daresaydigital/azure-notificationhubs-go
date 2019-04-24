@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/daresaydigital/azure-notificationhubs-go/lib/utils"
-	"gopkg.in/xmlpath.v2"
 )
 
 // NotificationHub is a client for sending messages through Azure Notification Hubs
@@ -28,9 +27,6 @@ type NotificationHub struct {
 
 	client                  utils.HTTPClient
 	expirationTimeGenerator utils.ExpirationTimeGenerator
-	regIDPath               *xmlpath.Path
-	eTagPath                *xmlpath.Path
-	expTmPath               *xmlpath.Path
 }
 
 // NewNotificationHub initializes and retubrns NotificationHub pointer
@@ -74,9 +70,6 @@ func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
 
 		client:                  utils.NewHubHTTPClient(),
 		expirationTimeGenerator: utils.NewExpirationTimeGenerator(),
-		regIDPath:               xmlpath.MustCompile("/entry/content/*/RegistrationId"),
-		eTagPath:                xmlpath.MustCompile("/entry/content/*/ETag"),
-		expTmPath:               xmlpath.MustCompile("/entry/content/*/ExpirationTime"),
 	}
 }
 

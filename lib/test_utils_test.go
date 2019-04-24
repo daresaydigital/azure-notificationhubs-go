@@ -7,7 +7,6 @@ import (
 
 	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
 	"github.com/daresaydigital/azure-notificationhubs-go/lib/utils"
-	"gopkg.in/xmlpath.v2"
 )
 
 // Internal constants for testing
@@ -41,9 +40,6 @@ type mockNotificationHub struct {
 
 	client                  utils.HTTPClient
 	expirationTimeGenerator utils.ExpirationTimeGenerator
-	regIDPath               *xmlpath.Path
-	eTagPath                *xmlpath.Path
-	expTmPath               *xmlpath.Path
 }
 
 type mockHubHTTPClient struct {

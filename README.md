@@ -23,7 +23,7 @@ go get github.com/daresaydigital/azure-notificationhubs-go
 ## Usage
 
 ```go
-package notificationhubs
+package main
 
 import (
   "fmt"
