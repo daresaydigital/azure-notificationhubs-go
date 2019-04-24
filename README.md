@@ -10,6 +10,8 @@ Now maintained and packaged by [Daresay AB](https://daresay.co), [@daresaydigita
 
 Basically a wrapper for this [Rest API](https://docs.microsoft.com/en-us/rest/api/notificationhubs/rest-api-methods)
 
+[![Build Status](https://travis-ci.org/daresaydigital/azure-notificationhubs-go.svg?branch=master)](https://travis-ci.org/daresaydigital/azure-notificationhubs-go)
+
 ## Installing
 
 Using go get
@@ -35,7 +37,7 @@ func main() {
     n = notificationhubs.NewNotification(notificationhubs.Template, payload)
   )
 
-  // broadcast push
+  // Broadcast push
   b, err := hub.Send(n, nil)
   if err != nil {
     panic(err)
@@ -43,8 +45,8 @@ func main() {
 
   fmt.Println("Message successfully created:", string(b))
 
-  // tag category push
-  b, err = hub.Send(n, []string{"tag1", "tag2"})
+  // Tag category push
+  b, err = hub.Send(n, "tag1 || tag2")
   if err != nil {
     panic(err)
   }
@@ -52,6 +54,62 @@ func main() {
   fmt.Println("Message successfully created:", string(b))
 }
 ```
+
+## Tag expressions
+
+Read more about how to segment notification receivers in [the official documentation](https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-tags-segment-push-message).
+
+### Example expressions
+
+Example devices:
+
+```json
+"devices": {
+  "A": {
+    "tags": [
+      "tag1",
+      "tag2"
+    ]
+  },
+  "B": {
+    "tags": [
+      "tag2",
+      "tag3"
+    ]
+  },
+  "C": {
+    "tags": [
+      "tag1",
+      "tag2",
+      "tag3"
+    ]
+  },
+}
+```
+
+- Send to devices that has `tag1` or `tag2`. Example devices A, B and C.
+
+  ```go
+  hub.Send(notification, "tag1 || tag2")
+  ```
+
+- Send to devices that has `tag1` and `tag2`. Device A and C.
+
+  ```go
+  hub.Send(notification, "tag1 && tag2")
+  ```
+
+- Send to devices that has `tag1` and `tag2` but not `tag3`. Device A.
+
+  ```go
+  hub.Send(notification, "tag1 && tag2 && !tag3")
+  ```
+
+- Send to devices that has not `tag1`. Device B.
+
+  ```go
+  hub.Send(notification, "!tag1")
+  ```
 
 ## Changelog
 
@@ -62,6 +120,7 @@ func main() {
 - Travis CI
 - Renamed the entities to use the same nomenclature as Azure
 - Using fixtures for tests
+- Support tag expressions
 
 ### v0.0.1
 

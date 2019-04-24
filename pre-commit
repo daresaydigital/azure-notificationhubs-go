@@ -50,6 +50,7 @@ please run 'golint ./...' on your changes before committing."
 
 run_govet() {
   log_info 'Running vet...'
+  go vet ./...
   GOVET_ERRORS=$(go vet ./... 2>&1)
   if [ -n "$GOVET_ERRORS" ]
   then
