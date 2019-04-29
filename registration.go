@@ -116,7 +116,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 }
 
 // RegisterWithTemplate sends a device registration with template to the Azure hub
-func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r Registration) (RegistrationResult, []byte, error) {
+func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRegistration) (RegistrationResult, []byte, error) {
 	var (
 		regRes  = RegistrationResult{}
 		regURL  = h.generateAPIURL("registrations")
@@ -127,15 +127,16 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r Registrati
 		}
 	)
 
-	switch r.NotificationFormat {
-	case AppleFormat:
-		payload = strings.Replace(appleRegXMLString, "{{DeviceID}}", r.DeviceID, 1)
-	case GcmFormat:
-		payload = strings.Replace(gcmRegXMLString, "{{DeviceID}}", r.DeviceID, 1)
+	switch r.Platform {
+	case ApplePlatform:
+		payload = strings.Replace(appleTemplateRegXMLString, "{{DeviceID}}", r.DeviceID, 1)
+	case GcmPlatform:
+		payload = strings.Replace(gcmTemplateRegXMLString, "{{DeviceID}}", r.DeviceID, 1)
 	default:
 		return regRes, nil, errors.New("Notification format not implemented")
 	}
 	payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
+	payload = strings.Replace(payload, "{{Template}}", r.Template, 1)
 
 	if r.RegistrationID != "" {
 		method = putMethod

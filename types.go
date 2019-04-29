@@ -17,6 +17,16 @@ type (
 		Tags               string             `json:"tags,omitempty"`
 	}
 
+	// TemplateRegistration is a device registration to the hub supporting a template
+	TemplateRegistration struct {
+		DeviceID       string         `json:"deviceId,omitempty"`
+		ExpirationTime time.Time      `json:"expirationTime,omitempty"`
+		RegistrationID string         `json:"registrationID,omitempty"`
+		Tags           string         `json:"tags,omitempty"`
+		Platform       TargetPlatform `json:"platform,omitempty"`
+		Template       string         `json:"template,omitempty"`
+	}
+
 	// Registrations is a list of RegistrationResults
 	Registrations struct {
 		ID      string               `xml:"id"      json:"id,omitempty"`

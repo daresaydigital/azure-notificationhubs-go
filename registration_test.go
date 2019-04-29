@@ -180,6 +180,90 @@ func Test_RegisterGcm(t *testing.T) {
 	}
 }
 
+func Test_RegisterTemplate(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		registration     = TemplateRegistration{
+			Tags:     "tag1,tag2,tag3",
+			DeviceID: "ABCDEFG",
+			Template: "{\"message\": \"This is a message\"",
+			Platform: ApplePlatform,
+		}
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
+		gotMethod := req.Method
+		if gotMethod != postMethod {
+			t.Errorf(errfmt, "method", postMethod, gotMethod)
+		}
+		gotURL := req.URL.String()
+		if gotURL != registrationsURL {
+			t.Errorf(errfmt, "URL", registrationsURL, gotURL)
+		}
+		data, e := ioutil.ReadFile("./fixtures/appleRegistrationResult.xml")
+		if e != nil {
+			return nil, nil, e
+		}
+		return data, nil, nil
+	}
+
+	result, data, err := nhub.RegisterWithTemplate(context.Background(), registration)
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+	if data == nil {
+		t.Errorf("Register response empty")
+	} else {
+		var (
+			publishedTime, _ = time.Parse("2006-01-02T15:04:05Z", "2019-04-20T09:10:11Z")
+			updatedTime, _   = time.Parse("2006-01-02T15:04:05Z", "2019-04-23T09:10:11Z")
+		)
+		expectedResult := RegistrationResult{
+			ID:        "https://testhub-ns.servicebus.windows.net/testhub/registrations/8247220326459738692-7748251457295609952-3?api-version=2015-01",
+			Title:     "8247220326459738692-7748251457295609952-3",
+			Published: publishedTime,
+			Updated:   updatedTime,
+			RegistrationContent: &RegistrationContent{
+				AppleRegistrationDescription: nil,
+				GcmRegistrationDescription:   nil,
+				RegistratedDevice: &RegistratedDevice{
+					ETag:           "1",
+					ExpirationTime: endOfEpoch,
+					RegistrationID: "8247220326459738692-7748251457295609952-3",
+					Tags:           []string{"tag1", "tag2", "tag3"},
+					DeviceID:       "ABCDEFG",
+				},
+				Format: AppleFormat,
+			},
+		}
+		if expectedResult.ID != result.ID {
+			t.Errorf(errfmt, "", expectedResult.ID, result.ID)
+		}
+		if expectedResult.Title != result.Title {
+			t.Errorf(errfmt, "", expectedResult.Title, result.Title)
+		}
+		if expectedResult.Published != result.Published {
+			t.Errorf(errfmt, "", expectedResult.Published, result.Published)
+		}
+		if expectedResult.Updated != result.Updated {
+			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
+		}
+		if expectedResult.RegistrationContent.AppleRegistrationDescription != result.RegistrationContent.AppleRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.AppleRegistrationDescription, result.RegistrationContent.AppleRegistrationDescription)
+		}
+		if expectedResult.RegistrationContent.GcmRegistrationDescription != result.RegistrationContent.GcmRegistrationDescription {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.GcmRegistrationDescription, result.RegistrationContent.GcmRegistrationDescription)
+		}
+		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
+			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		}
+		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
+			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
+		}
+	}
+}
+
 func Test_Registrations(t *testing.T) {
 	var (
 		nhub, mockClient = initTestItems()
