@@ -108,11 +108,11 @@ func (h *NotificationHub) generateSasToken() string {
 }
 
 // exec request using method to url
-func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL, headers Headers, buf io.Reader) ([]byte, error) {
+func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL, headers Headers, buf io.Reader) ([]byte, *http.Response, error) {
 	headers["Authorization"] = h.generateSasToken()
 	req, err := http.NewRequest(method, url.String(), buf)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	req.WithContext(ctx)
 	for header, val := range headers {

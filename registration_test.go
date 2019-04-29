@@ -21,7 +21,7 @@ func Test_RegisterApple(t *testing.T) {
 		}
 	)
 
-	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
 		gotMethod := req.Method
 		if gotMethod != postMethod {
 			t.Errorf(errfmt, "method", postMethod, gotMethod)
@@ -32,9 +32,9 @@ func Test_RegisterApple(t *testing.T) {
 		}
 		data, e := ioutil.ReadFile("./fixtures/appleRegistrationResult.xml")
 		if e != nil {
-			return nil, e
+			return nil, nil, e
 		}
-		return data, nil
+		return data, nil, nil
 	}
 
 	result, data, err := nhub.Register(context.Background(), registration)
@@ -104,7 +104,7 @@ func Test_RegisterGcm(t *testing.T) {
 		}
 	)
 
-	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
 		gotMethod := req.Method
 		if gotMethod != postMethod {
 			t.Errorf(errfmt, "method", postMethod, gotMethod)
@@ -115,9 +115,9 @@ func Test_RegisterGcm(t *testing.T) {
 		}
 		data, e := ioutil.ReadFile("./fixtures/androidRegistrationResult.xml")
 		if e != nil {
-			return nil, e
+			return nil, nil, e
 		}
-		return data, nil
+		return data, nil, nil
 	}
 
 	result, data, err := nhub.Register(context.Background(), registration)
@@ -185,7 +185,7 @@ func Test_Registrations(t *testing.T) {
 		nhub, mockClient = initTestItems()
 	)
 
-	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
 		gotMethod := req.Method
 		if gotMethod != getMethod {
 			t.Errorf(errfmt, "method", getMethod, gotMethod)
@@ -196,9 +196,9 @@ func Test_Registrations(t *testing.T) {
 		}
 		data, e := ioutil.ReadFile("./fixtures/registrationsResult.xml")
 		if e != nil {
-			return nil, e
+			return nil, nil, e
 		}
-		return data, nil
+		return data, nil, nil
 	}
 
 	result, data, err := nhub.Registrations(context.Background())

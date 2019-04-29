@@ -26,7 +26,7 @@ func (f NotificationFormat) IsValid() bool {
 		f == WindowsPhoneFormat
 }
 
-// IsValid identifies whether notification format is valid
+// IsValid identifies whether target is valid
 func (f TargetPlatform) IsValid() bool {
 	return f == AdmPlatform ||
 		f == AdmtemplatePlatform ||

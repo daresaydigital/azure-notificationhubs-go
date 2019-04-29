@@ -11,19 +11,20 @@ import (
 
 // Internal constants for testing
 const (
-	connectionString = "Endpoint=sb://testhub-ns.servicebus.windows.net/;SharedAccessKeyName=testAccessKeyName;SharedAccessKey=testAccessKey"
-	messagesURL      = "https://testhub-ns.servicebus.windows.net/testhub/messages?api-version=2015-01"
-	schedulesURL     = "https://testhub-ns.servicebus.windows.net/testhub/schedulednotifications?api-version=2015-01"
-	registrationsURL = "https://testhub-ns.servicebus.windows.net/testhub/registrations?api-version=2015-01"
-	hubPath          = "testhub"
-	apiVersionParam  = "api-version"
-	apiVersionValue  = "2015-01" // Looks old but the API is the same
-	directParam      = "direct"
-	defaultScheme    = "https"
-	errfmt           = "Expected %s: \n%v\ngot:\n%v"
-	postMethod       = "POST"
-	putMethod        = "PUT"
-	getMethod        = "GET"
+	connectionString         = "Endpoint=sb://testhub-ns.servicebus.windows.net/;SharedAccessKeyName=testAccessKeyName;SharedAccessKey=testAccessKey"
+	messagesURL              = "https://testhub-ns.servicebus.windows.net/testhub/messages?api-version=2015-01"
+	schedulesURL             = "https://testhub-ns.servicebus.windows.net/testhub/schedulednotifications?api-version=2015-01"
+	registrationsURL         = "https://testhub-ns.servicebus.windows.net/testhub/registrations?api-version=2015-01"
+	hubPath                  = "testhub"
+	apiVersionParam          = "api-version"
+	apiVersionValue          = "2015-01"
+	telemetryAPIVersionValue = "2016-07"
+	directParam              = "direct"
+	defaultScheme            = "https"
+	errfmt                   = "Expected %s: \n%v\ngot:\n%v"
+	postMethod               = "POST"
+	putMethod                = "PUT"
+	getMethod                = "GET"
 )
 
 var (
@@ -43,10 +44,10 @@ type mockNotificationHub struct {
 }
 
 type mockHubHTTPClient struct {
-	execFunc func(*http.Request) ([]byte, error)
+	execFunc func(*http.Request) ([]byte, *http.Response, error)
 }
 
-func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, error) {
+func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
 	return mc.execFunc(req)
 }
 

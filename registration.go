@@ -53,7 +53,7 @@ func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*R
 		regURL = h.generateAPIURL("registrations")
 	)
 	regURL.Path = path.Join(regURL.Path, deviceID)
-	rawResponse, err := h.exec(ctx, getMethod, regURL, Headers{}, nil)
+	rawResponse, _, err := h.exec(ctx, getMethod, regURL, Headers{}, nil)
 	if err != nil {
 		return nil, rawResponse, err
 	}
@@ -65,17 +65,16 @@ func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*R
 }
 
 // Registrations reads all registrations
-func (h *NotificationHub) Registrations(ctx context.Context) (*Registrations, []byte, error) {
-	rawResponse, err := h.exec(ctx, getMethod, h.generateAPIURL("registrations"), Headers{}, nil)
+func (h *NotificationHub) Registrations(ctx context.Context) (registrations *Registrations, rawResponse []byte, err error) {
+	rawResponse, _, err = h.exec(ctx, getMethod, h.generateAPIURL("registrations"), Headers{}, nil)
 	if err != nil {
-		return nil, rawResponse, err
+		return
 	}
-	res := &Registrations{}
-	if err = xml.Unmarshal(rawResponse, &res); err != nil {
-		return nil, rawResponse, err
+	if err = xml.Unmarshal(rawResponse, &registrations); err != nil {
+		return
 	}
-	res.normalize()
-	return res, rawResponse, nil
+	registrations.normalize()
+	return
 }
 
 // Register sends a device registration to the Azure hub
@@ -105,7 +104,7 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (Registr
 		regURL.Path = path.Join(regURL.Path, r.RegistrationID)
 	}
 
-	res, err := h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
+	res, _, err := h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
 
 	if err == nil {
 		if err = xml.Unmarshal(res, &regRes); err != nil {
@@ -143,7 +142,7 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r Registrati
 		regURL.Path = path.Join(regURL.Path, r.RegistrationID)
 	}
 
-	res, err := h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
+	res, _, err := h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
 
 	if err == nil {
 		if err = xml.Unmarshal(res, &regRes); err != nil {

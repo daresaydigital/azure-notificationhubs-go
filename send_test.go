@@ -3,6 +3,7 @@ package notificationhubs_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 func Test_NotificationHubendFanout(t *testing.T) {
 	nhub, notification, mockClient := initNotificationTestItems()
 
-	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, *http.Response, error) {
 		var (
 			gotURL     = obtainedReq.URL.String()
 			gotBody, _ = ioutil.ReadAll(obtainedReq.Body)
@@ -75,16 +76,28 @@ func Test_NotificationHubendFanout(t *testing.T) {
 			t.Errorf(errfmt, "token sas key name", nhub.SasKeyName, queryMap["skn"])
 		}
 
-		return nil, nil
+		mockResponse := http.Response{
+			Header: http.Header{
+				"Location": []string{
+					"https://messages.servicebus.windows.net/messagebus/messages/3288835312934927344-986564390439048203-1?api-version=2016-10",
+				},
+			},
+		}
+		return nil, &mockResponse, nil
 	}
 
-	b, err := nhub.Send(context.Background(), notification, nil)
+	b, telemetry, err := nhub.Send(context.Background(), notification, nil)
+	fmt.Printf("Telemetry: %v\n", telemetry)
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
 
 	if err != nil {
 		t.Errorf(errfmt, "error", nil, err)
+	}
+
+	if telemetry.NotificationMessageID != "3288835312934927344-986564390439048203-1" {
+		t.Errorf(errfmt, "telemetry", "3288835312934927344-986564390439048203-1", telemetry.NotificationMessageID)
 	}
 }
 
@@ -94,7 +107,7 @@ func Test_NotificationHubendCategories(t *testing.T) {
 		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
-	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, *http.Response, error) {
 		expectedTags := "tag1 || tag2"
 		if obtainedReq.Header.Get("ServiceBusNotification-Tags") != expectedTags {
 			t.Errorf(errfmt, "ServiceBusNotification-Tags", expectedTags, obtainedReq.Header.Get("ServiceBusNotification-Tags"))
@@ -105,10 +118,10 @@ func Test_NotificationHubendCategories(t *testing.T) {
 			t.Errorf(errfmt, "URL", messagesURL, gotURL)
 		}
 
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	b, err := nhub.Send(context.Background(), notification, &orTags)
+	b, _, err := nhub.Send(context.Background(), notification, &orTags)
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -124,14 +137,14 @@ func Test_NotificationSendError(t *testing.T) {
 		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
-	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
 		if reqURL := req.URL.String(); reqURL != messagesURL {
 			t.Errorf(errfmt, "URL", messagesURL, reqURL)
 		}
-		return nil, expectedError
+		return nil, nil, expectedError
 	}
 
-	b, obtainedErr := nhub.Send(context.Background(), notification, nil)
+	b, _, obtainedErr := nhub.Send(context.Background(), notification, nil)
 	if b != nil {
 		t.Errorf(errfmt, "Send []byte", nil, b)
 	}
@@ -143,16 +156,16 @@ func Test_NotificationSendError(t *testing.T) {
 func Test_NotificationScheduleSuccess(t *testing.T) {
 	nhub, notification, mockClient := initNotificationTestItems()
 
-	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, *http.Response, error) {
 		gotURL := obtainedReq.URL.String()
 		if gotURL != schedulesURL {
 			t.Errorf(errfmt, "URL", schedulesURL, gotURL)
 		}
 
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))
+	b, _, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -167,7 +180,7 @@ func Test_NotificationScheduleOutdated(t *testing.T) {
 		expectedError         = errors.New("You can not schedule a notification in the past")
 		nhub, notification, _ = initNotificationTestItems()
 	)
-	b, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
+	b, _, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "byte", nil, b)
 	}
@@ -183,16 +196,16 @@ func Test_NotificationScheduleError(t *testing.T) {
 		nhub, notification, mockClient = initNotificationTestItems()
 	)
 
-	mockClient.execFunc = func(req *http.Request) ([]byte, error) {
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
 		gotURL := req.URL.String()
 		if gotURL != schedulesURL {
 			t.Errorf(errfmt, "URL", schedulesURL, gotURL)
 		}
 
-		return nil, expectedError
+		return nil, nil, expectedError
 	}
 
-	b, obtainedErr := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))
+	b, _, obtainedErr := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))
 	if b != nil {
 		t.Errorf(errfmt, "Send []byte", nil, b)
 	}
