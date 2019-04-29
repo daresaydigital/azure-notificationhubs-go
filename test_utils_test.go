@@ -1,12 +1,12 @@
-package lib_test
+package notificationhubs_test
 
 import (
 	"net/http"
 	"net/url"
 	"time"
 
-	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
-	"github.com/daresaydigital/azure-notificationhubs-go/lib/utils"
+	. "github.com/daresaydigital/azure-notificationhubs-go"
+	"github.com/daresaydigital/azure-notificationhubs-go/utils"
 )
 
 // Internal constants for testing
