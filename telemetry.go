@@ -3,6 +3,7 @@ package notificationhubs
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"net/http"
 	"net/url"
 	"path"
@@ -45,9 +46,14 @@ func NewNotificationTelemetryFromLocationURL(url string) *NotificationTelemetry 
 }
 
 // NewNotificationTelemetryFromHTTPResponse reads the Location header from URL
-func NewNotificationTelemetryFromHTTPResponse(response *http.Response) *NotificationTelemetry {
+// Notification Telemetry is only available for Standard tier Notification Hubs.
+func NewNotificationTelemetryFromHTTPResponse(response *http.Response) (*NotificationTelemetry, error) {
 	if response == nil || response.Header == nil {
-		return nil
+		return nil, errors.New("Could not parse telemetry from response")
 	}
-	return NewNotificationTelemetryFromLocationURL(response.Header.Get("Location"))
+	location := response.Header.Get("Location")
+	if len(location) == 0 {
+		return &NotificationTelemetry{}, nil
+	}
+	return NewNotificationTelemetryFromLocationURL(location), nil
 }

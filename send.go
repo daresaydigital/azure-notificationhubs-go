@@ -69,7 +69,10 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, tags *strin
 	}
 
 	raw, response, err := h.exec(ctx, postMethod, _url, headers, bytes.NewBuffer(n.Payload))
-	telemetry = NewNotificationTelemetryFromHTTPResponse(response)
+	if err != nil {
+		return
+	}
+	telemetry, err = NewNotificationTelemetryFromHTTPResponse(response)
 	return
 }
 
@@ -91,6 +94,9 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 		RawQuery: query.Encode(),
 	}
 	raw, response, err := h.exec(ctx, postMethod, _url, headers, bytes.NewBuffer(n.Payload))
-	telemetry = NewNotificationTelemetryFromHTTPResponse(response)
+	if err != nil {
+		return
+	}
+	telemetry, err = NewNotificationTelemetryFromHTTPResponse(response)
 	return
 }

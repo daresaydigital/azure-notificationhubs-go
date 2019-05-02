@@ -11,18 +11,18 @@ const (
 	WindowsPhoneFormat NotificationFormat = "windowsphone"
 
 	AdmPlatform                  TargetPlatform = "adm"
-	AdmtemplatePlatform          TargetPlatform = "admtemplate"
+	AdmTemplatePlatform          TargetPlatform = "admtemplate"
 	ApplePlatform                TargetPlatform = "apple"
-	AppletemplatePlatform        TargetPlatform = "appletemplate"
+	AppleTemplatePlatform        TargetPlatform = "appletemplate"
 	BaiduPlatform                TargetPlatform = "baidu"
-	BaidutemplatePlatform        TargetPlatform = "baidutemplate"
+	BaiduTemplatePlatform        TargetPlatform = "baidutemplate"
 	GcmPlatform                  TargetPlatform = "gcm"
-	GcmtemplatePlatform          TargetPlatform = "gcmtemplate"
+	GcmTemplatePlatform          TargetPlatform = "gcmtemplate"
 	TemplatePlatform             TargetPlatform = "template"
 	WindowsphonePlatform         TargetPlatform = "windowsphone"
-	WindowsphonetemplatePlatform TargetPlatform = "windowsphonetemplate"
+	WindowsphoneTemplatePlatform TargetPlatform = "windowsphonetemplate"
 	WindowsPlatform              TargetPlatform = "windows"
-	WindowstemplatePlatform      TargetPlatform = "windowstemplate"
+	WindowsTemplatePlatform      TargetPlatform = "windowstemplate"
 
 	// Abandoned: Message processing has been abandoned.
 	// It will happen when the message could not be processed within the acceptable time window.

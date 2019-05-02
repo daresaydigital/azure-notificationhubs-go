@@ -117,8 +117,14 @@ func Test_NotificationHubendCategories(t *testing.T) {
 		if gotURL != messagesURL {
 			t.Errorf(errfmt, "URL", messagesURL, gotURL)
 		}
-
-		return nil, nil, nil
+		mockResponse := http.Response{
+			Header: http.Header{
+				"Location": []string{
+					"https://messages.servicebus.windows.net/messagebus/messages/3288835312934927344-986564390439048203-1?api-version=2016-10",
+				},
+			},
+		}
+		return nil, &mockResponse, nil
 	}
 
 	b, _, err := nhub.Send(context.Background(), notification, &orTags)
@@ -161,8 +167,15 @@ func Test_NotificationScheduleSuccess(t *testing.T) {
 		if gotURL != schedulesURL {
 			t.Errorf(errfmt, "URL", schedulesURL, gotURL)
 		}
+		mockResponse := http.Response{
+			Header: http.Header{
+				"Location": []string{
+					"https://messages.servicebus.windows.net/messagebus/messages/3288835312934927344-986564390439048203-1?api-version=2016-10",
+				},
+			},
+		}
 
-		return nil, nil, nil
+		return nil, &mockResponse, nil
 	}
 
 	b, _, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(time.Minute))

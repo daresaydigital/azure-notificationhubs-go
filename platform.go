@@ -29,16 +29,16 @@ func (f NotificationFormat) IsValid() bool {
 // IsValid identifies whether target is valid
 func (f TargetPlatform) IsValid() bool {
 	return f == AdmPlatform ||
-		f == AdmtemplatePlatform ||
+		f == AdmTemplatePlatform ||
 		f == ApplePlatform ||
-		f == AppletemplatePlatform ||
+		f == AppleTemplatePlatform ||
 		f == BaiduPlatform ||
-		f == BaidutemplatePlatform ||
+		f == BaiduTemplatePlatform ||
 		f == GcmPlatform ||
-		f == GcmtemplatePlatform ||
+		f == GcmTemplatePlatform ||
 		f == TemplatePlatform ||
 		f == WindowsphonePlatform ||
-		f == WindowsphonetemplatePlatform ||
+		f == WindowsphoneTemplatePlatform ||
 		f == WindowsPlatform ||
-		f == WindowstemplatePlatform
+		f == WindowsTemplatePlatform
 }

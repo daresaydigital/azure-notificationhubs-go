@@ -43,20 +43,20 @@ func handleResponse(resp *http.Response, inErr error) (b []byte, response *http.
 		}
 	}()
 
+	response = resp
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if !isOKResponseCode(resp.StatusCode) {
-		return nil, nil, fmt.Errorf("got unexpected response status code: %d. response: %s", resp.StatusCode, b)
+		return nil, response, fmt.Errorf("Got unexpected response status code: %d. response: %s", resp.StatusCode, string(b))
 	}
 
 	if len(b) == 0 {
-		return []byte(fmt.Sprintf("response status: %s", resp.Status)), resp, nil
+		return []byte(fmt.Sprintf("Response status: %s", resp.Status)), response, nil
 	}
 
-	response = resp
 	return
 }
 

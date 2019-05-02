@@ -10,8 +10,8 @@ type (
 
 	// Registration is a device registration to the hub
 	Registration struct {
-		DeviceID           string             `json:"deviceId,omitempty"`
-		ExpirationTime     time.Time          `json:"expirationTime,omitempty"`
+		DeviceID           string             `json:"deviceID,omitempty"`
+		ExpirationTime     *time.Time         `json:"expirationTime,omitempty"`
 		NotificationFormat NotificationFormat `json:"service,omitempty"`
 		RegistrationID     string             `json:"registrationID,omitempty"`
 		Tags               string             `json:"tags,omitempty"`
@@ -19,8 +19,8 @@ type (
 
 	// TemplateRegistration is a device registration to the hub supporting a template
 	TemplateRegistration struct {
-		DeviceID       string         `json:"deviceId,omitempty"`
-		ExpirationTime time.Time      `json:"expirationTime,omitempty"`
+		DeviceID       string         `json:"deviceID,omitempty"`
+		ExpirationTime *time.Time     `json:"expirationTime,omitempty"`
 		RegistrationID string         `json:"registrationID,omitempty"`
 		Tags           string         `json:"tags,omitempty"`
 		Platform       TargetPlatform `json:"platform,omitempty"`
@@ -31,56 +31,62 @@ type (
 	Registrations struct {
 		ID      string               `xml:"id"      json:"id,omitempty"`
 		Title   string               `xml:"title"   json:"title,omitempty"`
-		Updated time.Time            `xml:"updated" json:"updated,omitempty"`
+		Updated *time.Time           `xml:"updated" json:"updated,omitempty"`
 		Entries []RegistrationResult `xml:"entry"   json:"entries,omitempty"`
 	}
 
 	// RegistrationResult is the response from registration
 	RegistrationResult struct {
 		ID                  string               `xml:"id"        json:"id,omitempty"`
-		Published           time.Time            `xml:"published" json:"published,omitempty"`
+		Published           *time.Time           `xml:"published" json:"published,omitempty"`
 		RegistrationContent *RegistrationContent `xml:"content"   json:"content,omitempty"`
 		Title               string               `xml:"title"     json:"title,omitempty"`
-		Updated             time.Time            `xml:"updated"   json:"updated,omitempty"`
+		Updated             *time.Time           `xml:"updated"   json:"updated,omitempty"`
 	}
 
 	// RegistrationContent is information about a specific device registration
 	RegistrationContent struct {
-		AppleRegistrationDescription *RegistratedDevice `xml:"AppleRegistrationDescription" json:"-"`
-		Format                       NotificationFormat `xml:"-"                            json:"format,omitempty"`
-		GcmRegistrationDescription   *RegistratedDevice `xml:"GcmRegistrationDescription"   json:"-"`
-		RegistratedDevice            *RegistratedDevice `xml:"-"                            json:"registratedDevice,omitempty"`
+		Format            NotificationFormat `xml:"-" json:"format,omitempty"`
+		Target            TargetPlatform     `xml:"-" json:"target,omitempty"`
+		RegistratedDevice *RegistratedDevice `xml:"-" json:"registratedDevice,omitempty"`
+
+		AppleRegistrationDescription         *RegistratedDevice `xml:"AppleRegistrationDescription"         json:"-"`
+		AppleTemplateRegistrationDescription *RegistratedDevice `xml:"AppleTemplateRegistrationDescription" json:"-"`
+		GcmRegistrationDescription           *RegistratedDevice `xml:"GcmRegistrationDescription"           json:"-"`
+		GcmTemplateRegistrationDescription   *RegistratedDevice `xml:"GcmTemplateRegistrationDescription"   json:"-"`
 	}
 
 	// RegistratedDevice is a device registration to the hub
 	RegistratedDevice struct {
-		DeviceID             string    `xml:"-"                 json:"deviceID,omitempty"`
-		DeviceToken          *string   `xml:"DeviceToken"       json:"-"`
-		ETag                 string    `xml:"ETag"              json:"eTag,omitempty"`
-		ExpirationTimeString *string   `xml:"ExpirationTime"    json:"-"`
-		ExpirationTime       time.Time `xml:"-"                 json:"expirationTime,omitempty"`
-		GcmRegistrationID    *string   `xml:"GcmRegistrationId" json:"-"`
-		RegistrationID       string    `xml:"RegistrationId"    json:"registrationID,omitempty"`
-		Tags                 []string  `xml:"-"                 json:"tags,omitempty"`
-		TagsString           *string   `xml:"Tags"              json:"-"`
+		DeviceID       string     `xml:"-"              json:"deviceID,omitempty"`
+		ETag           string     `xml:"ETag"           json:"eTag,omitempty"`
+		ExpirationTime *time.Time `xml:"-"              json:"expirationTime,omitempty"`
+		Template       string     `xml:"BodyTemplate"   json:"template,omitempty"`
+		RegistrationID string     `xml:"RegistrationId" json:"registrationID,omitempty"`
+		Tags           []string   `xml:"-"              json:"tags,omitempty"`
+
+		DeviceToken          *string `xml:"DeviceToken"       json:"-"`
+		ExpirationTimeString *string `xml:"ExpirationTime"    json:"-"`
+		GcmRegistrationID    *string `xml:"GcmRegistrationId" json:"-"`
+		TagsString           *string `xml:"Tags"              json:"-"`
 	}
 
 	// NotificationDetails is the detailed information about a sent or scheduled message
 	NotificationDetails struct {
-		ID                string               `xml:"NotificationId"`
-		State             NotificationState    `xml:"State"`
-		EnqueueTime       string               `xml:"EnqueueTime"`
-		StartTime         string               `xml:"StartTime"`
-		EndTime           string               `xml:"EndTime"`
-		Body              string               `xml:"NotificationBody"`
-		TargetPlatforms   string               `xml:"TargetPlatforms"`
-		ApnsOutcomeCounts NotificationOutcomes `xml:"ApnsOutcomeCounts"`
-		GcmOutcomeCounts  NotificationOutcomes `xml:"GcmOutcomeCounts"`
+		ID                string                `xml:"NotificationId"`
+		State             NotificationState     `xml:"State"`
+		EnqueueTime       string                `xml:"EnqueueTime"`
+		StartTime         string                `xml:"StartTime"`
+		EndTime           string                `xml:"EndTime"`
+		Body              string                `xml:"NotificationBody"`
+		TargetPlatforms   string                `xml:"TargetPlatforms"`
+		ApnsOutcomeCounts *NotificationOutcomes `xml:"ApnsOutcomeCounts"`
+		GcmOutcomeCounts  *NotificationOutcomes `xml:"GcmOutcomeCounts"`
 	}
 
 	// NotificationTelemetry is the id of a sent or scheduled message
 	NotificationTelemetry struct {
-		NotificationMessageID string `json:"notificationMessageId"`
+		NotificationMessageID string `json:"notificationMessageID"`
 	}
 
 	// NotificationOutcomes array of outcomes
