@@ -37,7 +37,7 @@ func Test_RegisterApple(t *testing.T) {
 		return data, nil, nil
 	}
 
-	result, data, err := nhub.Register(context.Background(), registration)
+	data, result, err := nhub.Register(context.Background(), registration)
 
 	if err != nil {
 		t.Errorf(errfmt, "error", nil, err)
@@ -112,7 +112,7 @@ func Test_RegisterGcm(t *testing.T) {
 		return data, nil, nil
 	}
 
-	result, data, err := nhub.Register(context.Background(), registration)
+	data, result, err := nhub.Register(context.Background(), registration)
 
 	if err != nil {
 		t.Errorf(errfmt, "error", nil, err)
@@ -188,7 +188,7 @@ func Test_RegisterTemplate(t *testing.T) {
 		return data, nil, nil
 	}
 
-	result, data, err := nhub.RegisterWithTemplate(context.Background(), registration)
+	data, result, err := nhub.RegisterWithTemplate(context.Background(), registration)
 
 	if err != nil {
 		t.Errorf(errfmt, "error", nil, err)
@@ -260,7 +260,7 @@ func Test_Registrations(t *testing.T) {
 		return data, nil, nil
 	}
 
-	result, data, err := nhub.Registrations(context.Background())
+	data, result, err := nhub.Registrations(context.Background())
 
 	if err != nil {
 		t.Errorf(errfmt, "error", nil, err)

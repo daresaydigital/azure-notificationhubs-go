@@ -113,10 +113,10 @@ Example devices:
 
 ## Changelog
 
-### v0.1.0-beta1
+### v0.1.0
 
 - Support for templated notifications
-- Support for notification telemetry
+- Support for notification telemetry in higher tiers
 
 ### v0.0.2
 

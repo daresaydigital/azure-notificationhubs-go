@@ -71,30 +71,29 @@ func (r *RegistrationContent) normalize() {
 }
 
 // Registration reads one specific registration
-func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (*RegistrationResult, []byte, error) {
+func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (raw []byte, registrationResult *RegistrationResult, err error) {
 	var (
-		res    = &RegistrationResult{}
 		regURL = h.generateAPIURL("registrations")
 	)
 	regURL.Path = path.Join(regURL.Path, deviceID)
-	rawResponse, _, err := h.exec(ctx, getMethod, regURL, Headers{}, nil)
-	if err != nil {
-		return nil, rawResponse, err
-	}
-	if err = xml.Unmarshal(rawResponse, &res); err != nil {
-		return nil, rawResponse, err
-	}
-	res.RegistrationContent.normalize()
-	return res, rawResponse, nil
-}
-
-// Registrations reads all registrations
-func (h *NotificationHub) Registrations(ctx context.Context) (registrations *Registrations, rawResponse []byte, err error) {
-	rawResponse, _, err = h.exec(ctx, getMethod, h.generateAPIURL("registrations"), Headers{}, nil)
+	raw, _, err = h.exec(ctx, getMethod, regURL, Headers{}, nil)
 	if err != nil {
 		return
 	}
-	if err = xml.Unmarshal(rawResponse, &registrations); err != nil {
+	if err = xml.Unmarshal(raw, &registrationResult); err != nil {
+		return
+	}
+	registrationResult.RegistrationContent.normalize()
+	return
+}
+
+// Registrations reads all registrations
+func (h *NotificationHub) Registrations(ctx context.Context) (raw []byte, registrations *Registrations, err error) {
+	raw, _, err = h.exec(ctx, getMethod, h.generateAPIURL("registrations"), Headers{}, nil)
+	if err != nil {
+		return
+	}
+	if err = xml.Unmarshal(raw, &registrations); err != nil {
 		return
 	}
 	registrations.normalize()
@@ -102,7 +101,7 @@ func (h *NotificationHub) Registrations(ctx context.Context) (registrations *Reg
 }
 
 // Register sends a device registration to the Azure hub
-func (h *NotificationHub) Register(ctx context.Context, r Registration) (regRes *RegistrationResult, raw []byte, err error) {
+func (h *NotificationHub) Register(ctx context.Context, r Registration) (raw []byte, registrationResult *RegistrationResult, err error) {
 	var (
 		regURL  = h.generateAPIURL("registrations")
 		method  = postMethod
@@ -130,16 +129,16 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (regRes 
 	raw, _, err = h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
 
 	if err == nil {
-		if err = xml.Unmarshal(raw, &regRes); err != nil {
+		if err = xml.Unmarshal(raw, &registrationResult); err != nil {
 			return
 		}
 	}
-	regRes.normalize()
+	registrationResult.normalize()
 	return
 }
 
 // RegisterWithTemplate sends a device registration with template to the Azure hub
-func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRegistration) (regRes *RegistrationResult, raw []byte, err error) {
+func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRegistration) (raw []byte, registrationResult *RegistrationResult, err error) {
 	var (
 		regURL  = h.generateAPIURL("registrations")
 		method  = postMethod
@@ -155,7 +154,7 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRe
 	case GcmPlatform:
 		payload = strings.Replace(gcmTemplateRegXMLString, "{{DeviceID}}", r.DeviceID, 1)
 	default:
-		return regRes, nil, errors.New("Notification format not implemented")
+		return nil, nil, errors.New("Notification format not implemented")
 	}
 	payload = strings.Replace(payload, "{{Tags}}", r.Tags, 1)
 	payload = strings.Replace(payload, "{{Template}}", r.Template, 1)
@@ -170,10 +169,10 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRe
 	fmt.Printf("Raw: %s\n", string(raw))
 
 	if err == nil {
-		if err = xml.Unmarshal(raw, &regRes); err != nil {
+		if err = xml.Unmarshal(raw, &registrationResult); err != nil {
 			return
 		}
 	}
-	regRes.normalize()
+	registrationResult.normalize()
 	return
 }
