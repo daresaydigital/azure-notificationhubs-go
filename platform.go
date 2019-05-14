@@ -1,7 +1,4 @@
-package lib
-
-// NotificationFormat is the format of a notification
-type NotificationFormat string
+package notificationhubs
 
 // GetContentType returns Content-Type
 // associated with NotificationFormat
@@ -27,4 +24,21 @@ func (f NotificationFormat) IsValid() bool {
 		f == KindleFormat ||
 		f == WindowsFormat ||
 		f == WindowsPhoneFormat
+}
+
+// IsValid identifies whether target is valid
+func (f TargetPlatform) IsValid() bool {
+	return f == AdmPlatform ||
+		f == AdmTemplatePlatform ||
+		f == ApplePlatform ||
+		f == AppleTemplatePlatform ||
+		f == BaiduPlatform ||
+		f == BaiduTemplatePlatform ||
+		f == GcmPlatform ||
+		f == GcmTemplatePlatform ||
+		f == TemplatePlatform ||
+		f == WindowsphonePlatform ||
+		f == WindowsphoneTemplatePlatform ||
+		f == WindowsPlatform ||
+		f == WindowsTemplatePlatform
 }

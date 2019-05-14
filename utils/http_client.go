@@ -7,9 +7,9 @@ import (
 )
 
 type (
-	// HTTPClient interfacce
+	// HTTPClient interface, replaceable for testing or custom implementation
 	HTTPClient interface {
-		Exec(req *http.Request) ([]byte, error)
+		Exec(req *http.Request) ([]byte, *http.Response, error)
 	}
 
 	// HubHTTPClient is the internal HTTPClient
@@ -26,15 +26,15 @@ func NewHubHTTPClient() HTTPClient {
 }
 
 // Exec executes notification hub http request and handles the response
-func (hc HubHTTPClient) Exec(req *http.Request) ([]byte, error) {
+func (hc HubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
 	return handleResponse(hc.httpClient.Do(req))
 }
 
 // handleResponse reads http response body into byte slice
 // if response contains an unexpected status code, error is returned
-func handleResponse(resp *http.Response, inErr error) (b []byte, err error) {
+func handleResponse(resp *http.Response, inErr error) (b []byte, response *http.Response, err error) {
 	if inErr != nil {
-		return nil, inErr
+		return nil, nil, inErr
 	}
 
 	defer func() {
@@ -43,17 +43,18 @@ func handleResponse(resp *http.Response, inErr error) (b []byte, err error) {
 		}
 	}()
 
+	response = resp
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if !isOKResponseCode(resp.StatusCode) {
-		return nil, fmt.Errorf("got unexpected response status code: %d. response: %s", resp.StatusCode, b)
+		return nil, response, fmt.Errorf("Got unexpected response status code: %d. response: %s", resp.StatusCode, string(b))
 	}
 
 	if len(b) == 0 {
-		return []byte(fmt.Sprintf("response status: %s", resp.Status)), nil
+		return []byte(fmt.Sprintf("Response status: %s", resp.Status)), response, nil
 	}
 
 	return

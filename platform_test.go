@@ -1,9 +1,9 @@
-package lib_test
+package notificationhubs_test
 
 import (
 	"testing"
 
-	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
+	. "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
 func TestNotificationFormat_GetContentType(t *testing.T) {

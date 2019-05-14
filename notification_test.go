@@ -1,10 +1,10 @@
-package lib_test
+package notificationhubs_test
 
 import (
 	"reflect"
 	"testing"
 
-	. "github.com/daresaydigital/azure-notificationhubs-go/lib"
+	. "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
 func TestNewNotification(t *testing.T) {

@@ -1,0 +1,22 @@
+<entry a:etag="W/&quot;1&quot;"
+  xmlns="http://www.w3.org/2005/Atom"
+  xmlns:a="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata">
+  <id>https://testhub-ns.servicebus.windows.net/testhub/registrations/5556163970238751145-4593285841060527077-1?api-version=2015-01</id>
+  <title type="text">5556163970238751145-4593285841060527077-1</title>
+  <published>2019-04-30T12:57:31Z</published>
+  <updated>2019-04-30T12:57:31Z</updated>
+  <link rel="self" href="https://testhub-ns.servicebus.windows.net/testhub/registrations/5556163970238751145-4593285841060527077-1?api-version=2015-01"/>
+  <content type="application/xml">
+    <AppleTemplateRegistrationDescription xmlns="http://schemas.microsoft.com/netservices/2010/10/servicebus/connect"
+      xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+      <ETag>1</ETag>
+      <ExpirationTime>9999-12-31T23:59:59.999</ExpirationTime>
+      <RegistrationId>5556163970238751145-4593285841060527077-1</RegistrationId>
+      <Tags>tag1,tag3,dog,cat,horse</Tags>
+      <DeviceToken>ABCDEFG</DeviceToken>
+      <BodyTemplate><![CDATA[{"aps":{"alert":{"title": "$(title)","body": "$(body)","badge": "$(badge)"}},"articleid":"$(articleid)","animal":"$(animal)"}]]></BodyTemplate>
+      <Expiry i:nil="true"/>
+      <TemplateName i:nil="true"/>
+    </AppleTemplateRegistrationDescription>
+  </content>
+</entry>

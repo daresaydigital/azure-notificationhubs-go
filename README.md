@@ -20,7 +20,55 @@ Using go get
 go get github.com/daresaydigital/azure-notificationhubs-go
 ```
 
-## Usage
+## Registering device
+
+```go
+package main
+
+import (
+  "context"
+  "github.com/daresaydigital/azure-notificationhubs-go"
+)
+
+func main() {
+  var (
+    hub      = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
+    template = `{
+    "aps":{
+      "alert":{
+        "title":"$(title)",
+        "body":"$(body)",
+      },
+      "badge":"#(badge)",
+      "topic":"co.daresay.app",
+      "content-available": 1
+    },
+    "name1":"$(value1)",
+    "name2":"$(value2)"
+  }`
+  )
+
+  template = strings.ReplaceAll(template, "\n", "")
+  template = strings.ReplaceAll(template, "\t", "")
+
+  reg := notificationhubs.NewTemplateRegistration(
+    "ABC123",                       // The token from Apple or Google
+    nil,                            // Expiration time, probably endless
+    "ZXCVQWE",                      // Registration id, if you want to update an existing registration
+    "tag1,tag2",                    // Tags that matches this device
+    notificationhubs.ApplePlatform, // or GcmPlatform for Android
+    template                        // The template. Use "$(name)" for strings and "#(name)" for numbers
+  )
+
+  // or hub.NewRegistration( ... ) without template
+
+  hub.RegisterWithTemplate(context.TODO(), reg)
+  // or if no template:
+  hub.Register(context.TODO(), reg)
+}
+```
+
+## Sending notification
 
 ```go
 package main
@@ -32,9 +80,9 @@ import (
 
 func main() {
   var (
-    hub = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
+    hub     = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
     payload = []byte(`{"title": "Hello Hub!"}`)
-    n = notificationhubs.NewNotification(notificationhubs.Template, payload)
+    n       = notificationhubs.NewNotification(notificationhubs.Template, payload)
   )
 
   // Broadcast push
@@ -112,6 +160,11 @@ Example devices:
   ```
 
 ## Changelog
+
+### v0.1.0
+
+- Support for templated notifications
+- Support for notification telemetry in higher tiers
 
 ### v0.0.2
 

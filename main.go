@@ -1,19 +1,25 @@
 package notificationhubs
 
-import (
-	"github.com/daresaydigital/azure-notificationhubs-go/lib"
-)
+import "time"
 
 // NewNotificationHub initializes and returns NotificationHub pointer
-func NewNotificationHub(connectionString, hubPath string) *lib.NotificationHub {
-	return lib.NewNotificationHub(connectionString, hubPath)
+func NewNotificationHub(connectionString, hubPath string) *NotificationHub {
+	return newNotificationHub(connectionString, hubPath)
 }
 
 // NewNotification initalizes and returns Notification pointer
-func NewNotification(format lib.NotificationFormat, payload []byte) *lib.Notification {
-	notification, err := lib.NewNotification(format, payload)
-	if err != nil {
-		return nil
-	}
-	return notification
+func NewNotification(format NotificationFormat, payload []byte) (*Notification, error) {
+	return newNotification(format, payload)
+}
+
+// NewRegistration initializes and returns a Notification pointer
+func NewRegistration(deviceID string, expirationTime *time.Time, notificationFormat NotificationFormat,
+	registrationID string, tags string) *Registration {
+	return newRegistration(deviceID, expirationTime, notificationFormat, registrationID, tags)
+}
+
+// NewTemplateRegistration initializes and returns a TemplateNotification pointer
+func NewTemplateRegistration(deviceID string, expirationTime *time.Time, registrationID string, tags string,
+	platform TargetPlatform, template string) *TemplateRegistration {
+	return newTemplateRegistration(deviceID, expirationTime, registrationID, tags, platform, template)
 }
