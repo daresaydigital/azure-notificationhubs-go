@@ -86,7 +86,7 @@ type (
 
 	// NotificationTelemetry is the id of a sent or scheduled message
 	NotificationTelemetry struct {
-		NotificationMessageID string `json:"notificationMessageID"`
+		NotificationMessageID string `json:"notificationMessageID,omitempty"`
 	}
 
 	// NotificationOutcomes array of outcomes

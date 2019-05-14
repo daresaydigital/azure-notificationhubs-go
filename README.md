@@ -20,7 +20,48 @@ Using go get
 go get github.com/daresaydigital/azure-notificationhubs-go
 ```
 
-## Usage
+## Registering device
+
+```go
+package main
+
+import (
+  "context"
+  "github.com/daresaydigital/azure-notificationhubs-go"
+)
+
+var (
+  hub      = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
+  template = `{
+  "aps":{
+    "alert":{
+      "title":"$(title)",
+      "body":"$(body)",
+      "badge":"$(badge)"
+    },
+    "content-available": 1
+  },
+  "name1":"$(value1)",
+  "name2":"$(value2)"
+}`
+)
+
+template = strings.ReplaceAll(template, "\n", "")
+template = strings.ReplaceAll(template, "\t", "")
+
+device := notificationhubs.TemplateRegistration{
+  Tags:     []string{"tag1","tag2"},
+  DeviceID: "ABC123",
+  Platform: notificationhubs.ApplePlatform, // or GcmPlatform for Android
+  Template: template,
+}
+
+hub.RegisterWithTemplate(context.TODO(), device)
+// or if no template:
+hub.Register(context.TODO(), device)
+```
+
+## Sending notification
 
 ```go
 package main
@@ -32,9 +73,9 @@ import (
 
 func main() {
   var (
-    hub = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
+    hub     = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
     payload = []byte(`{"title": "Hello Hub!"}`)
-    n = notificationhubs.NewNotification(notificationhubs.Template, payload)
+    n       = notificationhubs.NewNotification(notificationhubs.Template, payload)
   )
 
   // Broadcast push

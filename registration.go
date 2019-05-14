@@ -5,11 +5,35 @@ import (
 	"context"
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"path"
 	"strings"
 	"time"
 )
+
+// newRegistration initializes and returns a Notification pointer
+func newRegistration(deviceID string, expirationTime *time.Time, notificationFormat NotificationFormat,
+	registrationID string, tags string) *Registration {
+	return &Registration{
+		deviceID,
+		expirationTime,
+		notificationFormat,
+		registrationID,
+		tags,
+	}
+}
+
+// newTemplateRegistration initializes and returns a TemplateNotification pointer
+func newTemplateRegistration(deviceID string, expirationTime *time.Time, registrationID string, tags string,
+	platform TargetPlatform, template string) *TemplateRegistration {
+	return &TemplateRegistration{
+		deviceID,
+		expirationTime,
+		registrationID,
+		tags,
+		platform,
+		template,
+	}
+}
 
 // Normalize normalizes all devices in the feed
 func (r *Registrations) normalize() {
@@ -165,8 +189,6 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRe
 	}
 
 	raw, _, err = h.exec(ctx, method, regURL, headers, bytes.NewBufferString(payload))
-
-	fmt.Printf("Raw: %s\n", string(raw))
 
 	if err == nil {
 		if err = xml.Unmarshal(raw, &registrationResult); err != nil {
