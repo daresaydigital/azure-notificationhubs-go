@@ -57,40 +57,40 @@ func (r *RegistrationContent) normalize() {
 		if r.AppleTemplateRegistrationDescription != nil {
 			r.Format = Template
 			r.Target = AppleTemplatePlatform
-			r.RegistratedDevice = r.AppleTemplateRegistrationDescription
+			r.RegisteredDevice = r.AppleTemplateRegistrationDescription
 		} else {
 			r.Format = AppleFormat
 			r.Target = ApplePlatform
-			r.RegistratedDevice = r.AppleRegistrationDescription
+			r.RegisteredDevice = r.AppleRegistrationDescription
 		}
-		r.RegistratedDevice.DeviceID = *r.RegistratedDevice.DeviceToken
-		r.RegistratedDevice.DeviceToken = nil
+		r.RegisteredDevice.DeviceID = *r.RegisteredDevice.DeviceToken
+		r.RegisteredDevice.DeviceToken = nil
 		r.AppleRegistrationDescription = nil
 		r.AppleTemplateRegistrationDescription = nil
 	} else if r.GcmRegistrationDescription != nil || r.GcmTemplateRegistrationDescription != nil {
 		if r.GcmTemplateRegistrationDescription != nil {
 			r.Format = Template
 			r.Target = GcmTemplatePlatform
-			r.RegistratedDevice = r.GcmTemplateRegistrationDescription
+			r.RegisteredDevice = r.GcmTemplateRegistrationDescription
 		} else {
 			r.Format = GcmFormat
 			r.Target = GcmPlatform
-			r.RegistratedDevice = r.GcmRegistrationDescription
+			r.RegisteredDevice = r.GcmRegistrationDescription
 		}
-		r.RegistratedDevice.DeviceID = *r.RegistratedDevice.GcmRegistrationID
-		r.RegistratedDevice.GcmRegistrationID = nil
+		r.RegisteredDevice.DeviceID = *r.RegisteredDevice.GcmRegistrationID
+		r.RegisteredDevice.GcmRegistrationID = nil
 		r.GcmRegistrationDescription = nil
 		r.GcmTemplateRegistrationDescription = nil
 	}
-	if r.RegistratedDevice != nil {
-		expirationTime, err := time.Parse("2006-01-02T15:04:05.000Z", *r.RegistratedDevice.ExpirationTimeString)
+	if r.RegisteredDevice != nil {
+		expirationTime, err := time.Parse("2006-01-02T15:04:05.000Z", *r.RegisteredDevice.ExpirationTimeString)
 		if err != nil { // The API just forwards the date string used by Apple, Google etc unfortunately. So format varies.
-			expirationTime, _ = time.Parse("2006-01-02T15:04:05.000", *r.RegistratedDevice.ExpirationTimeString)
+			expirationTime, _ = time.Parse("2006-01-02T15:04:05.000", *r.RegisteredDevice.ExpirationTimeString)
 		}
-		r.RegistratedDevice.ExpirationTime = &expirationTime
-		r.RegistratedDevice.ExpirationTimeString = nil
-		r.RegistratedDevice.Tags = strings.Split(*r.RegistratedDevice.TagsString, ",")
-		r.RegistratedDevice.TagsString = nil
+		r.RegisteredDevice.ExpirationTime = &expirationTime
+		r.RegisteredDevice.ExpirationTimeString = nil
+		r.RegisteredDevice.Tags = strings.Split(*r.RegisteredDevice.TagsString, ",")
+		r.RegisteredDevice.TagsString = nil
 	}
 }
 

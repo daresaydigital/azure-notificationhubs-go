@@ -30,35 +30,41 @@ import (
   "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
-var (
-  hub      = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
-  template = `{
-  "aps":{
-    "alert":{
-      "title":"$(title)",
-      "body":"$(body)",
-      "badge":"$(badge)"
+func main() {
+  var (
+    hub      = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
+    template = `{
+    "aps":{
+      "alert":{
+        "title":"$(title)",
+        "body":"$(body)",
+        "badge":"$(badge)"
+      },
+      "content-available": 1
     },
-    "content-available": 1
-  },
-  "name1":"$(value1)",
-  "name2":"$(value2)"
-}`
-)
+    "name1":"$(value1)",
+    "name2":"$(value2)"
+  }`
+  )
 
-template = strings.ReplaceAll(template, "\n", "")
-template = strings.ReplaceAll(template, "\t", "")
+  template = strings.ReplaceAll(template, "\n", "")
+  template = strings.ReplaceAll(template, "\t", "")
 
-device := notificationhubs.TemplateRegistration{
-  Tags:     []string{"tag1","tag2"},
-  DeviceID: "ABC123",
-  Platform: notificationhubs.ApplePlatform, // or GcmPlatform for Android
-  Template: template,
+  reg := notificationhubs.NewTemplateRegistration(
+    "ABC123",                       // The token from Apple or Google
+    nil,                            // Expiration time, probably endless
+    "ZXCVQWE",                      // Registration id, if you want to update an existing registration
+    "tag1,tag2",                    // Tags that matches this device
+    notificationhubs.ApplePlatform, // or GcmPlatform for Android
+    template                        // The template
+  )
+
+  // or hub.NewRegistration( ... ) without template
+
+  hub.RegisterWithTemplate(context.TODO(), reg)
+  // or if no template:
+  hub.Register(context.TODO(), reg)
 }
-
-hub.RegisterWithTemplate(context.TODO(), device)
-// or if no template:
-hub.Register(context.TODO(), device)
 ```
 
 ## Sending notification

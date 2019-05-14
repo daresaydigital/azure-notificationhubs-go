@@ -46,18 +46,18 @@ type (
 
 	// RegistrationContent is information about a specific device registration
 	RegistrationContent struct {
-		Format            NotificationFormat `xml:"-" json:"format,omitempty"`
-		Target            TargetPlatform     `xml:"-" json:"target,omitempty"`
-		RegistratedDevice *RegistratedDevice `xml:"-" json:"registratedDevice,omitempty"`
+		Format           NotificationFormat `xml:"-" json:"format,omitempty"`
+		Target           TargetPlatform     `xml:"-" json:"target,omitempty"`
+		RegisteredDevice *RegisteredDevice  `xml:"-" json:"registeredDevice,omitempty"`
 
-		AppleRegistrationDescription         *RegistratedDevice `xml:"AppleRegistrationDescription"         json:"-"`
-		AppleTemplateRegistrationDescription *RegistratedDevice `xml:"AppleTemplateRegistrationDescription" json:"-"`
-		GcmRegistrationDescription           *RegistratedDevice `xml:"GcmRegistrationDescription"           json:"-"`
-		GcmTemplateRegistrationDescription   *RegistratedDevice `xml:"GcmTemplateRegistrationDescription"   json:"-"`
+		AppleRegistrationDescription         *RegisteredDevice `xml:"AppleRegistrationDescription"         json:"-"`
+		AppleTemplateRegistrationDescription *RegisteredDevice `xml:"AppleTemplateRegistrationDescription" json:"-"`
+		GcmRegistrationDescription           *RegisteredDevice `xml:"GcmRegistrationDescription"           json:"-"`
+		GcmTemplateRegistrationDescription   *RegisteredDevice `xml:"GcmTemplateRegistrationDescription"   json:"-"`
 	}
 
-	// RegistratedDevice is a device registration to the hub
-	RegistratedDevice struct {
+	// RegisteredDevice is a device registration to the hub
+	RegisteredDevice struct {
 		DeviceID       string     `xml:"-"              json:"deviceID,omitempty"`
 		ETag           string     `xml:"ETag"           json:"eTag,omitempty"`
 		ExpirationTime *time.Time `xml:"-"              json:"expirationTime,omitempty"`

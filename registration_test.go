@@ -55,7 +55,7 @@ func Test_RegisterApple(t *testing.T) {
 			Published: &publishedTime,
 			Updated:   &updatedTime,
 			RegistrationContent: &RegistrationContent{
-				RegistratedDevice: &RegistratedDevice{
+				RegisteredDevice: &RegisteredDevice{
 					ETag:           "1",
 					ExpirationTime: &endOfEpoch,
 					RegistrationID: "8247220326459738692-7748251457295609952-3",
@@ -77,8 +77,8 @@ func Test_RegisterApple(t *testing.T) {
 		if !expectedResult.Updated.Equal(*result.Updated) {
 			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
 		}
-		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
-			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		if !reflect.DeepEqual(result.RegistrationContent.RegisteredDevice, expectedResult.RegistrationContent.RegisteredDevice) {
+			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegisteredDevice, result.RegistrationContent.RegisteredDevice)
 		}
 		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
 			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
@@ -130,7 +130,7 @@ func Test_RegisterGcm(t *testing.T) {
 			Published: &publishedTime,
 			Updated:   &updatedTime,
 			RegistrationContent: &RegistrationContent{
-				RegistratedDevice: &RegistratedDevice{
+				RegisteredDevice: &RegisteredDevice{
 					ETag:           "1",
 					ExpirationTime: &endOfEpoch,
 					RegistrationID: "4603854756731398046-26535929789529194-1",
@@ -152,8 +152,8 @@ func Test_RegisterGcm(t *testing.T) {
 		if !expectedResult.Updated.Equal(*result.Updated) {
 			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
 		}
-		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
-			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		if !reflect.DeepEqual(result.RegistrationContent.RegisteredDevice, expectedResult.RegistrationContent.RegisteredDevice) {
+			t.Errorf(errfmt, "registration result", expectedResult.RegistrationContent.RegisteredDevice, result.RegistrationContent.RegisteredDevice)
 		}
 		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
 			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
@@ -206,7 +206,7 @@ func Test_RegisterTemplate(t *testing.T) {
 			Published: &publishedTime,
 			Updated:   &publishedTime,
 			RegistrationContent: &RegistrationContent{
-				RegistratedDevice: &RegistratedDevice{
+				RegisteredDevice: &RegisteredDevice{
 					ETag:           "1",
 					ExpirationTime: &endOfEpoch,
 					RegistrationID: "5556163970238751145-4593285841060527077-1",
@@ -230,8 +230,8 @@ func Test_RegisterTemplate(t *testing.T) {
 		if !expectedResult.Updated.Equal(*result.Updated) {
 			t.Errorf(errfmt, "", expectedResult.Updated, result.Updated)
 		}
-		if !reflect.DeepEqual(result.RegistrationContent.RegistratedDevice, expectedResult.RegistrationContent.RegistratedDevice) {
-			t.Errorf(errfmt, "device", expectedResult.RegistrationContent.RegistratedDevice, result.RegistrationContent.RegistratedDevice)
+		if !reflect.DeepEqual(result.RegistrationContent.RegisteredDevice, expectedResult.RegistrationContent.RegisteredDevice) {
+			t.Errorf(errfmt, "device", expectedResult.RegistrationContent.RegisteredDevice, result.RegistrationContent.RegisteredDevice)
 		}
 		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
 			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
@@ -277,26 +277,26 @@ func Test_Registrations(t *testing.T) {
 		if result.Entries[0].RegistrationContent.Format != AppleFormat {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[0].RegistrationContent.Format)
 		}
-		if result.Entries[0].RegistrationContent.RegistratedDevice.DeviceID != "ABCDEF" {
-			t.Errorf(errfmt, "device format", "ABCDEF", result.Entries[0].RegistrationContent.RegistratedDevice.DeviceID)
+		if result.Entries[0].RegistrationContent.RegisteredDevice.DeviceID != "ABCDEF" {
+			t.Errorf(errfmt, "device format", "ABCDEF", result.Entries[0].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[1].RegistrationContent.Format != AppleFormat {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[1].RegistrationContent.Format)
 		}
-		if result.Entries[1].RegistrationContent.RegistratedDevice.DeviceID != "QWERTY" {
-			t.Errorf(errfmt, "device format", "QWERTY", result.Entries[1].RegistrationContent.RegistratedDevice.DeviceID)
+		if result.Entries[1].RegistrationContent.RegisteredDevice.DeviceID != "QWERTY" {
+			t.Errorf(errfmt, "device format", "QWERTY", result.Entries[1].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[2].RegistrationContent.Format != AppleFormat {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[2].RegistrationContent.Format)
 		}
-		if result.Entries[2].RegistrationContent.RegistratedDevice.DeviceID != "ZXCVBN" {
-			t.Errorf(errfmt, "device format", "ZXCVBN", result.Entries[2].RegistrationContent.RegistratedDevice.DeviceID)
+		if result.Entries[2].RegistrationContent.RegisteredDevice.DeviceID != "ZXCVBN" {
+			t.Errorf(errfmt, "device format", "ZXCVBN", result.Entries[2].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[3].RegistrationContent.Format != GcmFormat {
 			t.Errorf(errfmt, "device format", GcmFormat, result.Entries[3].RegistrationContent.Format)
 		}
-		if result.Entries[3].RegistrationContent.RegistratedDevice.DeviceID != "ANDROIDID" {
-			t.Errorf(errfmt, "device format", "ANDROIDID", result.Entries[3].RegistrationContent.RegistratedDevice.DeviceID)
+		if result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID != "ANDROIDID" {
+			t.Errorf(errfmt, "device format", "ANDROIDID", result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 	}
 }
