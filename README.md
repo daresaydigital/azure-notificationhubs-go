@@ -38,8 +38,9 @@ func main() {
       "alert":{
         "title":"$(title)",
         "body":"$(body)",
-        "badge":"$(badge)"
       },
+      "badge":"#(badge)",
+      "topic":"co.daresay.app",
       "content-available": 1
     },
     "name1":"$(value1)",
@@ -56,7 +57,7 @@ func main() {
     "ZXCVQWE",                      // Registration id, if you want to update an existing registration
     "tag1,tag2",                    // Tags that matches this device
     notificationhubs.ApplePlatform, // or GcmPlatform for Android
-    template                        // The template
+    template                        // The template. Use "$(name)" for strings and "#(name)" for numbers
   )
 
   // or hub.NewRegistration( ... ) without template
