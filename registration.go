@@ -45,7 +45,7 @@ func (r *Registrations) normalize() {
 }
 
 // Normalize the registration result
-func (r *RegistrationResult) normalize() {
+func (r RegistrationResult) normalize() {
 	if r.RegistrationContent != nil {
 		r.RegistrationContent.normalize()
 	}
@@ -195,6 +195,8 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRe
 			return
 		}
 	}
-	registrationResult.normalize()
+	if registrationResult != nil {
+		registrationResult.normalize()
+	}
 	return
 }

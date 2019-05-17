@@ -161,6 +161,10 @@ Example devices:
 
 ## Changelog
 
+### v0.1.1
+
+- Bugfix for when device registration were responding an unexpected response.
+
 ### v0.1.0
 
 - Support for templated notifications
