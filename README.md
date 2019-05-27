@@ -188,6 +188,13 @@ Example devices:
 First release by Daresay. Restructured the code and renamed the API according to
 Go standards.
 
+## TODO
+
+- Implement cancel scheduled notifications using http DELETE.
+  [Find inspo from the Java SDK here.](https://github.com/Azure/azure-notificationhubs-java-backend/blob/d293da9db7564dfd2800e45899f0e2425f669c6e/NotificationHubs/src/com/windowsazure/messaging/NotificationHub.java#L646)
+
+- Only Android and iOS is supported today, implement the other supported platforms. Probably limited usecase.
+
 ## License
 
 See the [LICENSE](LICENSE.txt) file for license rights and limitations (MIT).
