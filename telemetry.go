@@ -51,7 +51,7 @@ func NewNotificationTelemetryFromHTTPResponse(response *http.Response) (*Notific
 	if response == nil || response.Header == nil {
 		return nil, errors.New("Could not parse telemetry from response")
 	}
-	location := response.Header.Get("Location")
+	location := response.Header.Get("location")
 	if len(location) == 0 {
 		return &NotificationTelemetry{}, nil
 	}
