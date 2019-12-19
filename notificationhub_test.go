@@ -1,6 +1,8 @@
 package notificationhubs_test
 
 import (
+	"context"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -51,4 +53,21 @@ func Test_NewNotificationHub(t *testing.T) {
 			t.Errorf(errfmt, i, "NotificationHub.hubURL", wantURL, gotURL)
 		}
 	}
+}
+
+func Test_HTTPRequestContext(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
+		foo := req.Context().Value("foo")
+		if foo != "bar" {
+			t.Errorf(errfmt, "request context value", "foo", foo)
+		}
+		return nil, nil, nil
+	}
+
+	ctx := context.WithValue(context.Background(), "foo", "bar")
+	_, _, _ = nhub.Registrations(ctx)
 }
