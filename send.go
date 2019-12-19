@@ -31,7 +31,7 @@ func (h *NotificationHub) SendDirect(ctx context.Context, n *Notification, devic
 	return
 }
 
-// Schedule pusblishes a scheduled notification
+// Schedule publishes a scheduled notification
 // Format tags according to https://docs.microsoft.com/en-us/azure/notification-hubs/notification-hubs-tags-segment-push-message
 // or nil if no tags should be used
 func (h *NotificationHub) Schedule(ctx context.Context, n *Notification, tags *string, deliverTime time.Time) (raw []byte, telemetry *NotificationTelemetry, err error) {

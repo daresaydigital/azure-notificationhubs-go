@@ -25,7 +25,7 @@ type NotificationHub struct {
 	expirationTimeGenerator utils.ExpirationTimeGenerator
 }
 
-// newNotificationHub initializes and retubrns NotificationHub pointer
+// newNotificationHub initializes and returns NotificationHub pointer
 func newNotificationHub(connectionString, hubPath string) *NotificationHub {
 	var (
 		connData    = strings.Split(connectionString, ";")
@@ -80,7 +80,7 @@ func (h *NotificationHub) SetExpirationTimeGenerator(e utils.ExpirationTimeGener
 }
 
 // generateSasToken generates and returns
-// azure notification hub shared access signatue token
+// azure notification hub shared access signature token
 func (h *NotificationHub) generateSasToken() string {
 	uri := &url.URL{
 		Host:   h.HubURL.Host,
