@@ -70,7 +70,6 @@
         <ETag>1</ETag>
         <ExpirationTime>9999-12-31T23:59:59.999Z</ExpirationTime>
         <RegistrationId>4603854756731398046-26535929789529194-1</RegistrationId>
-        <Tags>tag1,tag3</Tags>
         <GcmRegistrationId>ANDROIDID</GcmRegistrationId>
       </GcmRegistrationDescription>
     </content>

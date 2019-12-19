@@ -2,6 +2,7 @@ package notificationhubs_test
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -330,5 +331,32 @@ func Test_Registrations(t *testing.T) {
 		if result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID != "ANDROIDID" {
 			t.Errorf(errfmt, "device format", "ANDROIDID", result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID)
 		}
+		if result.Entries[3].RegistrationContent.RegisteredDevice.TagsString != nil {
+			t.Errorf(errfmt, "device tags", nil, result.Entries[3].RegistrationContent.RegisteredDevice.TagsString)
+		}
+	}
+}
+
+func Test_RegisterWebClientError(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		registration     = Registration{
+			Tags:               "tag1,tag3",
+			DeviceID:           "ANDROIDID",
+			NotificationFormat: GcmFormat,
+		}
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
+		return nil, nil, errors.New("fail")
+	}
+
+	_, result, err := nhub.Register(context.Background(), registration)
+
+	if result != nil {
+		t.Errorf(errfmt, "result", nil, result)
+	}
+	if err == nil {
+		t.Errorf(errfmt, "error", "fail", nil)
 	}
 }

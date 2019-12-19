@@ -89,7 +89,9 @@ func (r *RegistrationContent) normalize() {
 		}
 		r.RegisteredDevice.ExpirationTime = &expirationTime
 		r.RegisteredDevice.ExpirationTimeString = nil
-		r.RegisteredDevice.Tags = strings.Split(*r.RegisteredDevice.TagsString, ",")
+		if r.RegisteredDevice.TagsString != nil {
+			r.RegisteredDevice.Tags = strings.Split(*r.RegisteredDevice.TagsString, ",")
+		}
 		r.RegisteredDevice.TagsString = nil
 	}
 }
@@ -157,7 +159,9 @@ func (h *NotificationHub) Register(ctx context.Context, r Registration) (raw []b
 			return
 		}
 	}
-	registrationResult.normalize()
+	if registrationResult != nil {
+		registrationResult.normalize()
+	}
 	return
 }
 
