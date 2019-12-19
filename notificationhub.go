@@ -114,7 +114,7 @@ func (h *NotificationHub) exec(ctx context.Context, method string, url *url.URL,
 	if err != nil {
 		return nil, nil, err
 	}
-	req.WithContext(ctx)
+	req = req.WithContext(ctx)
 	for header, val := range headers {
 		req.Header.Set(header, val)
 	}
