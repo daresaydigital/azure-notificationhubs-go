@@ -311,25 +311,25 @@ func Test_Registrations(t *testing.T) {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[0].RegistrationContent.Format)
 		}
 		if result.Entries[0].RegistrationContent.RegisteredDevice.DeviceID != "ABCDEF" {
-			t.Errorf(errfmt, "device format", "ABCDEF", result.Entries[0].RegistrationContent.RegisteredDevice.DeviceID)
+			t.Errorf(errfmt, "device ID", "ABCDEF", result.Entries[0].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[1].RegistrationContent.Format != AppleFormat {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[1].RegistrationContent.Format)
 		}
 		if result.Entries[1].RegistrationContent.RegisteredDevice.DeviceID != "QWERTY" {
-			t.Errorf(errfmt, "device format", "QWERTY", result.Entries[1].RegistrationContent.RegisteredDevice.DeviceID)
+			t.Errorf(errfmt, "device ID", "QWERTY", result.Entries[1].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[2].RegistrationContent.Format != AppleFormat {
 			t.Errorf(errfmt, "device format", AppleFormat, result.Entries[2].RegistrationContent.Format)
 		}
 		if result.Entries[2].RegistrationContent.RegisteredDevice.DeviceID != "ZXCVBN" {
-			t.Errorf(errfmt, "device format", "ZXCVBN", result.Entries[2].RegistrationContent.RegisteredDevice.DeviceID)
+			t.Errorf(errfmt, "device ID", "ZXCVBN", result.Entries[2].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[3].RegistrationContent.Format != GcmFormat {
 			t.Errorf(errfmt, "device format", GcmFormat, result.Entries[3].RegistrationContent.Format)
 		}
 		if result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID != "ANDROIDID" {
-			t.Errorf(errfmt, "device format", "ANDROIDID", result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID)
+			t.Errorf(errfmt, "device ID", "ANDROIDID", result.Entries[3].RegistrationContent.RegisteredDevice.DeviceID)
 		}
 		if result.Entries[3].RegistrationContent.RegisteredDevice.TagsString != nil {
 			t.Errorf(errfmt, "device tags", nil, result.Entries[3].RegistrationContent.RegisteredDevice.TagsString)

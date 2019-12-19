@@ -13,10 +13,8 @@ import (
 // NotificationDetails reads one specific registration
 func (h *NotificationHub) NotificationDetails(ctx context.Context, notificationID string) (details *NotificationDetails, raw []byte, err error) {
 	var (
-		// res  = &NotificationDetails{}
-		_url = h.generateAPIURL("messages")
+		_url = h.generateAPIURL(path.Join("messages", notificationID))
 	)
-	_url.Path = path.Join(_url.Path, notificationID)
 	_url.RawQuery = url.Values{apiVersionParam: {telemetryAPIVersionValue}}.Encode()
 	raw, _, err = h.exec(ctx, getMethod, _url, Headers{}, nil)
 	if err != nil {

@@ -97,11 +97,10 @@ func (r *RegistrationContent) normalize() {
 }
 
 // Registration reads one specific registration
-func (h *NotificationHub) Registration(ctx context.Context, deviceID string) (raw []byte, registrationResult *RegistrationResult, err error) {
+func (h *NotificationHub) Registration(ctx context.Context, registrationID string) (raw []byte, registrationResult *RegistrationResult, err error) {
 	var (
-		regURL = h.generateAPIURL("registrations")
+		regURL = h.generateAPIURL(path.Join("registrations", registrationID))
 	)
-	regURL.Path = path.Join(regURL.Path, deviceID)
 	raw, _, err = h.exec(ctx, getMethod, regURL, Headers{}, nil)
 	if err != nil {
 		return

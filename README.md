@@ -27,6 +27,7 @@ package main
 
 import (
   "context"
+  "strings"
   "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
@@ -57,14 +58,14 @@ func main() {
     "ZXCVQWE",                      // Registration id, if you want to update an existing registration
     "tag1,tag2",                    // Tags that matches this device
     notificationhubs.ApplePlatform, // or GcmPlatform for Android
-    template                        // The template. Use "$(name)" for strings and "#(name)" for numbers
+    template,                       // The template. Use "$(name)" for strings and "#(name)" for numbers
   )
 
   // or hub.NewRegistration( ... ) without template
 
-  hub.RegisterWithTemplate(context.TODO(), reg)
+  hub.RegisterWithTemplate(context.TODO(), *reg)
   // or if no template:
-  hub.Register(context.TODO(), reg)
+  hub.Register(context.TODO(), *reg)
 }
 ```
 
@@ -74,6 +75,7 @@ func main() {
 package main
 
 import (
+  "context"
   "fmt"
   "github.com/daresaydigital/azure-notificationhubs-go"
 )
@@ -82,11 +84,11 @@ func main() {
   var (
     hub     = notificationhubs.NewNotificationHub("YOUR_DefaultFullSharedAccessConnectionString", "YOUR_HubPath")
     payload = []byte(`{"title": "Hello Hub!"}`)
-    n       = notificationhubs.NewNotification(notificationhubs.Template, payload)
+    n, _    = notificationhubs.NewNotification(notificationhubs.Template, payload)
   )
 
   // Broadcast push
-  b, err := hub.Send(n, nil)
+  b, _, err := hub.Send(context.TODO(), n, nil)
   if err != nil {
     panic(err)
   }
@@ -94,7 +96,8 @@ func main() {
   fmt.Println("Message successfully created:", string(b))
 
   // Tag category push
-  b, err = hub.Send(n, "tag1 || tag2")
+  tags := "tag1 || tag2"
+  b, _, err = hub.Send(context.TODO(), n, &tags)
   if err != nil {
     panic(err)
   }
@@ -163,7 +166,7 @@ Example devices:
 
 ### v0.1.2
 
-- Bugfix for reading the messsage id on standard hubs. Headers are always lowercase.
+- Bugfix for reading the message id on standard hubs. Headers are always lowercase.
 
 ### v0.1.1
 
