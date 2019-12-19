@@ -200,3 +200,17 @@ func (h *NotificationHub) RegisterWithTemplate(ctx context.Context, r TemplateRe
 	}
 	return
 }
+
+// Unregister sends a device registration delete to the Azure hub
+func (h *NotificationHub) Unregister(ctx context.Context, registration RegisteredDevice) (err error) {
+	var (
+		regURL  = h.generateAPIURL(path.Join("registrations", registration.RegistrationID))
+		headers = map[string]string{
+			"Content-Type": "application/atom+xml;type=entry;charset=utf-8",
+			"If-Match":     registration.ETag,
+		}
+	)
+
+	_, _, err = h.exec(ctx, deleteMethod, regURL, headers, nil)
+	return
+}

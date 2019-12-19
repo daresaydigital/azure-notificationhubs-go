@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -236,6 +237,37 @@ func Test_RegisterTemplate(t *testing.T) {
 		if expectedResult.RegistrationContent.Format != result.RegistrationContent.Format {
 			t.Errorf(errfmt, "", expectedResult.RegistrationContent.Format, result.RegistrationContent.Format)
 		}
+	}
+}
+
+func Test_Unregister(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		device           = RegisteredDevice{
+			RegistrationID: "8247220326459738692-7748251457295609952-3",
+			ETag:           "1",
+		}
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
+		gotMethod := req.Method
+		if gotMethod != deleteMethod {
+			t.Errorf(errfmt, "method", deleteMethod, gotMethod)
+		}
+		u, _ := url.Parse(registrationsURL)
+		u.Path += "/" + device.RegistrationID
+		wantURL := u.String()
+		gotURL := req.URL.String()
+		if gotURL != wantURL {
+			t.Errorf(errfmt, "URL", wantURL, gotURL)
+		}
+		return nil, nil, nil
+	}
+
+	err := nhub.Unregister(context.Background(), device)
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
 	}
 }
 
