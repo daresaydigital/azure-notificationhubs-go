@@ -25,6 +25,7 @@ const (
 	postMethod               = "POST"
 	putMethod                = "PUT"
 	getMethod                = "GET"
+	deleteMethod             = "DELETE"
 )
 
 var (
