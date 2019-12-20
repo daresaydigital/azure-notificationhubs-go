@@ -63,5 +63,5 @@ func handleResponse(resp *http.Response, inErr error) (b []byte, response *http.
 // isOKResponseCode identifies whether provided
 // response code matches the expected OK code
 func isOKResponseCode(code int) bool {
-	return code == http.StatusCreated || code == http.StatusOK
+	return code >= http.StatusOK && code < http.StatusMultipleChoices
 }

@@ -19,6 +19,7 @@ const (
 	getMethod    = "GET"
 	postMethod   = "POST"
 	putMethod    = "PUT"
+	patchMethod  = "PATCH"
 
 	// appleRegXMLString is the XML string for registering an iOS device
 	// Replace {{Tags}} and {{DeviceID}} with the correct values

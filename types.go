@@ -71,6 +71,42 @@ type (
 		TagsString           *string `xml:"Tags"              json:"-"`
 	}
 
+	// Installation is a device installation in the hub
+	Installation struct {
+		InstallationID     string                               `json:"installationId,omitempty"`
+		LastActiveOn       *time.Time                           `json:"lastActiveOn,omitempty"`
+		ExpirationTime     *time.Time                           `json:"expirationTime,omitempty"`
+		LastUpdate         *time.Time                           `json:"lastUpdate,omitempty"`
+		Platform           InstallationPlatform                 `json:"platform,omitempty"`
+		PushChannel        string                               `json:"pushChannel,omitempty"`
+		ExpiredPushChannel bool                                 `json:"expiredPushChannel,omitempty"`
+		Tags               []string                             `json:"tags,omitempty"`
+		Templates          map[string]InstallationTemplate      `json:"templates,omitempty"`
+		SecondaryTiles     map[string]InstallationSecondaryTile `json:"secondaryTiles,omitempty"`
+	}
+
+	// InstallationTemplate is a device installation template
+	InstallationTemplate struct {
+		Body    string            `json:"body,omitempty"`
+		Headers map[string]string `json:"headers,omitempty"`
+		Expiry  *time.Time        `json:"expiry,omitempty"`
+		Tags    []string          `json:"tags,omitempty"`
+	}
+
+	// InstallationSecondaryTile is a device installation secondary tile
+	InstallationSecondaryTile struct {
+		PushChannel string                          `json:"pushChannel,omitempty"`
+		Tags        []string                        `json:"tags,omitempty"`
+		Templates   map[string]InstallationTemplate `json:"templates,omitempty"`
+	}
+
+	// InstallationChange is a device installation change
+	InstallationChange struct {
+		Op    InstallationChangeOp `json:"op,omitempty"`
+		Path  string               `json:"path,omitempty"`
+		Value string               `json:"value,omitempty"`
+	}
+
 	// NotificationDetails is the detailed information about a sent or scheduled message
 	NotificationDetails struct {
 		ID                string                `xml:"NotificationId"`
@@ -111,4 +147,10 @@ type (
 
 	// TargetPlatform is the specific platform
 	TargetPlatform string
+
+	// InstallationPlatform is the installation platform
+	InstallationPlatform string
+
+	// InstallationChangeOp is the installation change operation
+	InstallationChangeOp string
 )
