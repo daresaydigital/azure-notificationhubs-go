@@ -1,0 +1,11 @@
+{
+  "installationId": "0a92196c-20c3-4308-8046-c384c902d0ff",
+  "pushChannel": "ANDROIDID",
+  "pushChannelExpired": false,
+  "platform": "gcm",
+  "expirationTime": "9999-12-31T23:59:59.999Z",
+  "tags": [
+    "tag1",
+    "tag3"
+  ]
+}

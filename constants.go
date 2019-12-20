@@ -24,6 +24,16 @@ const (
 	WindowsPlatform              TargetPlatform = "windows"
 	WindowsTemplatePlatform      TargetPlatform = "windowstemplate"
 
+	APNSPlatform InstallationPlatform = "apns"
+	WNSPlatform  InstallationPlatform = "wns"
+	MPNSPlatform InstallationPlatform = "mpns"
+	ADMPlatform  InstallationPlatform = "adm"
+	GCMPlatform  InstallationPlatform = "gcm"
+
+	InstallationChangeAdd     InstallationChangeOp = "add"
+	InstallationChangeRemove  InstallationChangeOp = "remove"
+	InstallationChangeReplace InstallationChangeOp = "replace"
+
 	// Abandoned: Message processing has been abandoned.
 	// It will happen when the message could not be processed within the acceptable time window.
 	// By default, it's 30 minutes.

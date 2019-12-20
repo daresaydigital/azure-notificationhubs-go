@@ -15,6 +15,7 @@ const (
 	messagesURL              = "https://testhub-ns.servicebus.windows.net/testhub/messages?api-version=2015-01"
 	schedulesURL             = "https://testhub-ns.servicebus.windows.net/testhub/schedulednotifications?api-version=2015-01"
 	registrationsURL         = "https://testhub-ns.servicebus.windows.net/testhub/registrations?api-version=2015-01"
+	installationsURL         = "https://testhub-ns.servicebus.windows.net/testhub/installations?api-version=2015-01"
 	hubPath                  = "testhub"
 	apiVersionParam          = "api-version"
 	apiVersionValue          = "2015-01"
@@ -25,6 +26,7 @@ const (
 	postMethod               = "POST"
 	putMethod                = "PUT"
 	getMethod                = "GET"
+	patchMethod              = "PATCH"
 	deleteMethod             = "DELETE"
 )
 
