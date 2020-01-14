@@ -3,8 +3,12 @@ package notificationhubs
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/textproto"
 	"net/url"
 	"path"
 	"strconv"
@@ -28,6 +32,15 @@ func (h *NotificationHub) SendDirect(ctx context.Context, n *Notification, devic
 	raw, telemetry, err = h.sendDirect(ctx, n, deviceHandle)
 	if err != nil {
 		return nil, nil, fmt.Errorf("notificationhubs.SendDirect: %s", err)
+	}
+	return
+}
+
+// SendDirectBatch publishes notification to a collection of devices
+func (h *NotificationHub) SendDirectBatch(ctx context.Context, n *Notification, deviceHandles ...string) (raw []byte, telemetry *NotificationTelemetry, err error) {
+	raw, telemetry, err = h.sendDirectBatch(ctx, n, deviceHandles)
+	if err != nil {
+		return nil, nil, fmt.Errorf("notificationhubs.SendDirectBatch: %s", err)
 	}
 	return
 }
@@ -95,6 +108,66 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 		RawQuery: query.Encode(),
 	}
 	raw, response, err := h.exec(ctx, postMethod, _url, headers, bytes.NewBuffer(n.Payload))
+	if err != nil {
+		return
+	}
+	telemetry, err = NewNotificationTelemetryFromHTTPResponse(response)
+	return
+}
+
+func (h *NotificationHub) sendDirectBatch(ctx context.Context, n *Notification, deviceHandles []string) (raw []byte, telemetry *NotificationTelemetry, err error) {
+	if len(deviceHandles) > 1000 {
+		err = errors.New("You can not batch send to more than 1,000 devices")
+		return
+	}
+
+	buf := &bytes.Buffer{}
+	multi := multipart.NewWriter(buf)
+
+	var part io.Writer
+	part, err = multi.CreatePart(textproto.MIMEHeader{
+		"Content-Type":        []string{n.Format.GetContentType()},
+		"Content-Disposition": []string{"inline; name=notification"},
+	})
+	if err != nil {
+		return
+	}
+	if _, err = part.Write(n.Payload); err != nil {
+		return
+	}
+
+	part, err = multi.CreatePart(textproto.MIMEHeader{
+		"Content-Type":        []string{"application/json"},
+		"Content-Disposition": []string{"inline; name=devices"},
+	})
+	if err != nil {
+		return
+	}
+	var handles []byte
+	handles, err = json.Marshal(deviceHandles)
+	if err != nil {
+		return
+	}
+	if _, err = part.Write(handles); err != nil {
+		return
+	}
+
+	var (
+		headers = Headers{
+			"Content-Type":                  multi.FormDataContentType(),
+			"ServiceBusNotification-Format": string(n.Format),
+			"X-Apns-Expiration":             string(h.expirationTimeGenerator.GenerateTimestamp()), //apns-expiration
+		}
+		query = h.HubURL.Query()
+	)
+	query.Add(directParam, "")
+	_url := &url.URL{
+		Host:     h.HubURL.Host,
+		Scheme:   h.HubURL.Scheme,
+		Path:     path.Join(h.HubURL.Path, "messages", "$batch"),
+		RawQuery: query.Encode(),
+	}
+	raw, response, err := h.exec(ctx, postMethod, _url, headers, buf)
 	if err != nil {
 		return
 	}
