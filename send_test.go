@@ -227,3 +227,36 @@ func Test_NotificationScheduleError(t *testing.T) {
 		t.Errorf(errfmt, "Send error", expectedError, obtainedErr)
 	}
 }
+
+func Test_NotificationSendDirectBatchError(t *testing.T) {
+	var (
+		expectedError                  = errors.New("test error")
+		nhub, notification, mockClient = initNotificationTestItems()
+	)
+
+	mockClient.execFunc = func(req *http.Request) ([]byte, *http.Response, error) {
+		gotMethod := req.Method
+		if gotMethod != postMethod {
+			t.Errorf(errfmt, "method", postMethod, gotMethod)
+		}
+
+		u, _ := url.Parse(messagesURL)
+		u.Path += "/$batch"
+		q := u.Query()
+		q.Add(directParam, "")
+		u.RawQuery = q.Encode()
+		wantURL := u.String()
+		if reqURL := req.URL.String(); reqURL != wantURL {
+			t.Errorf(errfmt, "URL", wantURL, reqURL)
+		}
+		return nil, nil, expectedError
+	}
+
+	b, _, obtainedErr := nhub.SendDirectBatch(context.Background(), notification, "foo", "bar")
+	if b != nil {
+		t.Errorf(errfmt, "SendDirectBatch []byte", nil, b)
+	}
+	if !strings.Contains(obtainedErr.Error(), expectedError.Error()) {
+		t.Errorf(errfmt, "SendDirectBatch error", expectedError, obtainedErr)
+	}
+}
