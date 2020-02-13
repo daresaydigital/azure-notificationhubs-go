@@ -164,6 +164,15 @@ Example devices:
 
 ## Changelog
 
+### v0.1.3
+
+- Pass the current context to the http request instead of using the background context, thanks to [NathanBaulch](https://github.com/NathanBaulch)
+- Add support for installations, thanks to [NathanBaulch](https://github.com/NathanBaulch)
+- Add support for batch send, thanks to [NathanBaulch](https://github.com/NathanBaulch)
+- Add support for unregistering a device, thanks to [NathanBaulch](https://github.com/NathanBaulch)
+- Add automatic testing for Go 1.13
+- Two minor bug fixes
+
 ### v0.1.2
 
 - Bugfix for reading the message id on standard hubs. Headers are always lowercase.
