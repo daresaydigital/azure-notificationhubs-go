@@ -11,7 +11,7 @@ Now maintained and packaged by [Daresay AB](https://daresay.co), [@daresaydigita
 Basically a wrapper for this [Rest API](https://docs.microsoft.com/en-us/rest/api/notificationhubs/rest-api-methods)
 
 [![Build Status](https://travis-ci.org/daresaydigital/azure-notificationhubs-go.svg?branch=master)](https://travis-ci.org/daresaydigital/azure-notificationhubs-go)
-![Go](https://github.com/daresaydigital/azure-notificationhubs-go/workflows/Go/badge.svg?branch=master)
+[![Go](https://github.com/daresaydigital/azure-notificationhubs-go/workflows/Go/badge.svg?branch=master)](https://github.com/daresaydigital/azure-notificationhubs-go/actions)
 
 ## Installing
 
