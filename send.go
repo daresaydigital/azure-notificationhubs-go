@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, tags *strin
 		headers = map[string]string{
 			"Content-Type":                  n.Format.GetContentType(),
 			"ServiceBusNotification-Format": string(n.Format),
-			"X-Apns-Expiration":             string(h.expirationTimeGenerator.GenerateTimestamp()), //apns-expiration
+			"X-Apns-Expiration":             strconv.FormatInt(h.expirationTimeGenerator.GenerateTimestamp(), 10), //apns-expiration
 		}
 		_url = h.generateAPIURL("")
 	)
