@@ -1,7 +1,6 @@
 # Azure Notification Hubs for Go(lang)
 
-This library provides a Microsoft Azure Notification Hubs Client for backend applications.
-It is packaged as a Go module to and is tested with Go 1.12+.
+This library provides a Go module for Microsoft Azure Notification Hubs.
 
 Originally a fork from [Gozure](https://github.com/onefootball/gozure) with patches
 from [Martin Etnestad](https://github.com/gnawybol) @ [vippsas](https://github.com/vippsas/gozure).
@@ -20,6 +19,10 @@ Using go get
 ```sh
 go get github.com/daresaydigital/azure-notificationhubs-go
 ```
+
+## External dependencies
+
+No external dependencies
 
 ## Registering device
 
