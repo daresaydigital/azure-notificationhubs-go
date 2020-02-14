@@ -1,19 +1,10 @@
 #!/bin/sh
 
-LATEST_STABLE_SUPPORTED_GO_VERSION="1.12"
-
 main() {
-  if local_go_version_is_latest_stable
-  then
-    run_gofmt
-    run_golint
-    run_govet
-  fi
+  run_gofmt
+  run_golint
+  run_govet
   run_unit_tests
-}
-
-local_go_version_is_latest_stable() {
-  go version | grep -q $LATEST_STABLE_SUPPORTED_GO_VERSION
 }
 
 log_error() {

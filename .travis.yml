@@ -15,4 +15,5 @@ before_install:
 
 script:
   - ./pre-commit
+  - go build -v .
   - go test -vet -v -cover -race ./...
