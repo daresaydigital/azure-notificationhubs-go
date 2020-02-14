@@ -165,6 +165,10 @@ Example devices:
 
 ## Changelog
 
+### v0.1.4
+
+- Fix for background notifications on iOS 13
+
 ### v0.1.3
 
 - Pass the current context to the http request instead of using the background context, thanks to [NathanBaulch](https://github.com/NathanBaulch)
