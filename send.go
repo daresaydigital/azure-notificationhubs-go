@@ -71,6 +71,17 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, tags *strin
 		headers["ServiceBusNotification-Tags"] = *tags
 	}
 
+	//IOS 13 and upwards require these headers to be set. They are not set by Notification Hub at the moment, so we need to send them
+	if n.Format == AppleFormat {
+		if isIosBackgroundNotification(n.Payload) {
+			headers["X-Apns-Push-Type"] = "background"
+			headers["X-Apns-Priority"] = "5"
+		} else {
+			headers["X-Apns-Push-Type"] = "alert"
+			headers["X-Apns-Priority"] = "10"
+		}
+	}
+
 	if deliverTime != nil {
 		if deliverTime.After(time.Now()) {
 			_url.Path = path.Join(_url.Path, "schedulednotifications")

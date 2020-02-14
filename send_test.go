@@ -2,6 +2,7 @@ package notificationhubs_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/daresaydigital/azure-notificationhubs-go"
 )
 
 func Test_NotificationHubendFanout(t *testing.T) {
@@ -258,5 +261,93 @@ func Test_NotificationSendDirectBatchError(t *testing.T) {
 	}
 	if !strings.Contains(obtainedErr.Error(), expectedError.Error()) {
 		t.Errorf(errfmt, "SendDirectBatch error", expectedError, obtainedErr)
+	}
+}
+
+func Test_NotificationHubSendIosBackgroundNotification(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		notPayload       = &IosBackgroundNotificationPayload{Aps: struct {
+			ContentAvailable int "json:\"content-available\""
+		}{
+			ContentAvailable: 1,
+		}}
+		payload, _      = json.Marshal(notPayload)
+		notification, _ = NewNotification(AppleFormat, payload)
+	)
+
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, *http.Response, error) {
+		if obtainedReq.Header.Get("X-Apns-Push-Type") != "background" {
+			t.Errorf(errfmt, "X-Apns-Push-Type", "background", obtainedReq.Header.Get("X-Apns-Push-Type"))
+		}
+
+		if obtainedReq.Header.Get("X-Apns-Priority") != "5" {
+			t.Errorf(errfmt, "X-Apns-Priority", "5", obtainedReq.Header.Get("X-Apns-Priority"))
+		}
+
+		gotURL := obtainedReq.URL.String()
+		if gotURL != messagesURL {
+			t.Errorf(errfmt, "URL", messagesURL, gotURL)
+		}
+
+		mockResponse := http.Response{
+			Header: http.Header{
+				"Location": []string{
+					"https://messages.servicebus.windows.net/messagebus/messages/3288835312934927344-986564390439048203-1?api-version=2016-10",
+				},
+			},
+		}
+
+		return nil, &mockResponse, nil
+	}
+
+	b, _, err := nhub.Send(context.Background(), notification, nil)
+	if b != nil {
+		t.Errorf(errfmt, "byte", nil, b)
+	}
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
+	}
+}
+
+func Test_NotificationHubSendAppleAlertNotification(t *testing.T) {
+	var (
+		nhub, mockClient = initTestItems()
+		notification, _  = NewNotification(AppleFormat, []byte("{\"aps\":{\"alert\":1}}"))
+	)
+
+	mockClient.execFunc = func(obtainedReq *http.Request) ([]byte, *http.Response, error) {
+		if obtainedReq.Header.Get("X-Apns-Push-Type") != "alert" {
+			t.Errorf(errfmt, "X-Apns-Push-Type", "alert", obtainedReq.Header.Get("X-Apns-Push-Type"))
+		}
+
+		if obtainedReq.Header.Get("X-Apns-Priority") != "10" {
+			t.Errorf(errfmt, "X-Apns-Priority", "10", obtainedReq.Header.Get("X-Apns-Priority"))
+		}
+
+		gotURL := obtainedReq.URL.String()
+		if gotURL != messagesURL {
+			t.Errorf(errfmt, "URL", messagesURL, gotURL)
+		}
+
+		mockResponse := http.Response{
+			Header: http.Header{
+				"Location": []string{
+					"https://messages.servicebus.windows.net/messagebus/messages/3288835312934927344-986564390439048203-1?api-version=2016-10",
+				},
+			},
+		}
+
+		return nil, &mockResponse, nil
+	}
+
+	b, _, err := nhub.Send(context.Background(), notification, nil)
+	if b != nil {
+		t.Errorf(errfmt, "byte", nil, b)
+	}
+
+	if err != nil {
+		t.Errorf(errfmt, "error", nil, err)
 	}
 }
