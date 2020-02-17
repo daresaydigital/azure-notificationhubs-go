@@ -56,7 +56,8 @@ func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, er
 	return mc.execFunc(req)
 }
 
-func (mc *mockHubHTTPClient) OnRequest(fun *utils.OnRequestFunc) {}
+func (mc mockHubHTTPClient) OnRequest(fun utils.OnRequestFunc) {}
+func (mc mockHubHTTPClient) SetTimeout(t time.Duration)        {}
 
 func initNotificationTestItems() (*NotificationHub, *Notification, *mockHubHTTPClient) {
 	var (

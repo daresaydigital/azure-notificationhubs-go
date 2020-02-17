@@ -75,7 +75,7 @@ func (h *NotificationHub) SetHTTPClient(c utils.HTTPClient) {
 }
 
 // OnRequest adds an optional hook to add more logging or other upon a request from the hub
-func (h *NotificationHub) OnRequest(fun *utils.OnRequestFunc) {
+func (h *NotificationHub) OnRequest(fun utils.OnRequestFunc) {
 	h.client.OnRequest(fun)
 }
 
