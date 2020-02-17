@@ -1,33 +1,53 @@
+// Package utils are the the place for replaceable utils in the module
 package utils
 
 import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type (
 	// HTTPClient interface, replaceable for testing or custom implementation
 	HTTPClient interface {
-		Exec(req *http.Request) ([]byte, *http.Response, error)
+		Exec(*http.Request) ([]byte, *http.Response, error)
+		OnRequest(OnRequestFunc)
+		SetTimeout(time.Duration)
 	}
 
-	// HubHTTPClient is the internal HTTPClient
-	HubHTTPClient struct {
+	hubHTTPClient struct {
 		httpClient *http.Client
+		onRequest  OnRequestFunc
 	}
+
+	// OnRequestFunc takes a request and returns nothing, add it using the OnRequest hook
+	OnRequestFunc func(*http.Request)
 )
 
 // NewHubHTTPClient is creating the default client
 func NewHubHTTPClient() HTTPClient {
-	return HubHTTPClient{
+	return &hubHTTPClient{
 		httpClient: &http.Client{},
 	}
 }
 
 // Exec executes notification hub http request and handles the response
-func (hc HubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
+func (hc *hubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
+	if hc.onRequest != nil {
+		hc.onRequest(req)
+	}
 	return handleResponse(hc.httpClient.Do(req))
+}
+
+// OnRequest adds an optional hook to add more logging or other upon a request from the hub
+func (hc *hubHTTPClient) OnRequest(fun OnRequestFunc) {
+	hc.onRequest = fun
+}
+
+// SetTimeout of the http requests
+func (hc *hubHTTPClient) SetTimeout(t time.Duration) {
+	hc.httpClient.Timeout = t
 }
 
 // handleResponse reads http response body into byte slice
@@ -50,7 +70,7 @@ func handleResponse(resp *http.Response, inErr error) (b []byte, response *http.
 	}
 
 	if !isOKResponseCode(resp.StatusCode) {
-		return nil, response, fmt.Errorf("Got unexpected response status code: %d. response: %s", resp.StatusCode, string(b))
+		return nil, response, fmt.Errorf("got unexpected response status code: %d. response: %s", resp.StatusCode, string(b))
 	}
 
 	if len(b) == 0 {

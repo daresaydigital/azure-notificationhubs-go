@@ -74,6 +74,11 @@ func (h *NotificationHub) SetHTTPClient(c utils.HTTPClient) {
 	h.client = c
 }
 
+// OnRequest adds an optional hook to add more logging or other upon a request from the hub
+func (h *NotificationHub) OnRequest(fun utils.OnRequestFunc) {
+	h.client.OnRequest(fun)
+}
+
 // SetExpirationTimeGenerator makes is possible to use a custom generator
 func (h *NotificationHub) SetExpirationTimeGenerator(e utils.ExpirationTimeGenerator) {
 	h.expirationTimeGenerator = e
