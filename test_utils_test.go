@@ -37,22 +37,26 @@ var (
 	sasURIString          = (&url.URL{Host: "testhub-ns.servicebus.windows.net", Scheme: defaultScheme}).String()
 )
 
-type mockNotificationHub struct {
-	SasKeyValue string
-	SasKeyName  string
-	HubURL      *url.URL
+type (
+	mockNotificationHub struct {
+		SasKeyValue string
+		SasKeyName  string
+		HubURL      *url.URL
 
-	client                  utils.HTTPClient
-	expirationTimeGenerator utils.ExpirationTimeGenerator
-}
+		client                  utils.HTTPClient
+		expirationTimeGenerator utils.ExpirationTimeGenerator
+	}
 
-type mockHubHTTPClient struct {
-	execFunc func(*http.Request) ([]byte, *http.Response, error)
-}
+	mockHubHTTPClient struct {
+		execFunc func(*http.Request) ([]byte, *http.Response, error)
+	}
+)
 
 func (mc *mockHubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
 	return mc.execFunc(req)
 }
+
+func (mc *mockHubHTTPClient) OnRequest(fun *utils.OnRequestFunc) {}
 
 func initNotificationTestItems() (*NotificationHub, *Notification, *mockHubHTTPClient) {
 	var (
