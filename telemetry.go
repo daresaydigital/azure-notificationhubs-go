@@ -47,7 +47,7 @@ func NewNotificationTelemetryFromLocationURL(url string) *NotificationTelemetry 
 // Notification Telemetry is only available for Standard tier Notification Hubs.
 func NewNotificationTelemetryFromHTTPResponse(response *http.Response) (*NotificationTelemetry, error) {
 	if response == nil || response.Header == nil {
-		return nil, errors.New("Could not parse telemetry from response")
+		return nil, errors.New("could not parse telemetry from response")
 	}
 	location := response.Header.Get("location")
 	if len(location) == 0 {

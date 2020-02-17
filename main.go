@@ -1,3 +1,4 @@
+// Package notificationhubs provides a module for Microsoft Azure Notification Hubs.
 package notificationhubs
 
 import "time"

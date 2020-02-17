@@ -87,7 +87,7 @@ func (h *NotificationHub) send(ctx context.Context, n *Notification, tags *strin
 			_url.Path = path.Join(_url.Path, "schedulednotifications")
 			headers["ServiceBusNotification-ScheduleTime"] = deliverTime.Format("2006-01-02T15:04:05")
 		} else {
-			return nil, nil, errors.New("You can not schedule a notification in the past")
+			return nil, nil, errors.New("you can not schedule a notification in the past")
 		}
 	} else {
 		_url.Path = path.Join(_url.Path, "messages")
@@ -128,7 +128,7 @@ func (h *NotificationHub) sendDirect(ctx context.Context, n *Notification, devic
 
 func (h *NotificationHub) sendDirectBatch(ctx context.Context, n *Notification, deviceHandles []string) (raw []byte, telemetry *NotificationTelemetry, err error) {
 	if len(deviceHandles) > 1000 {
-		err = errors.New("You can not batch send to more than 1,000 devices")
+		err = errors.New("you can not batch send to more than 1,000 devices")
 		return
 	}
 

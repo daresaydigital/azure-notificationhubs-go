@@ -193,7 +193,7 @@ func Test_NotificationScheduleSuccess(t *testing.T) {
 
 func Test_NotificationScheduleOutdated(t *testing.T) {
 	var (
-		expectedError         = errors.New("You can not schedule a notification in the past")
+		expectedError         = errors.New("you can not schedule a notification in the past")
 		nhub, notification, _ = initNotificationTestItems()
 	)
 	b, _, err := nhub.Schedule(context.Background(), notification, nil, time.Now().Add(-time.Minute))
