@@ -14,20 +14,20 @@ type (
 
 	// HubHTTPClient is the internal HTTPClient
 	HubHTTPClient struct {
-		httpClient *http.Client
+		*http.Client
 	}
 )
 
 // NewHubHTTPClient is creating the default client
 func NewHubHTTPClient() HTTPClient {
 	return HubHTTPClient{
-		httpClient: &http.Client{},
+		&http.Client{},
 	}
 }
 
 // Exec executes notification hub http request and handles the response
 func (hc HubHTTPClient) Exec(req *http.Request) ([]byte, *http.Response, error) {
-	return handleResponse(hc.httpClient.Do(req))
+	return handleResponse(hc.Do(req))
 }
 
 // handleResponse reads http response body into byte slice
